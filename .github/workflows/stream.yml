@@ -1,0 +1,47 @@
+name: YouTube Live Stream
+
+on:
+  workflow_dispatch:
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies & FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg xvfb chromium-browser
+          pip install -r requirements.txt
+
+      - name: Start Stream
+        env:
+          YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+          YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
+        run: |
+          # 1. Jalankan layar virtual (Xvfb) resolusi 720p
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          sleep 2
+
+          # 2. Jalankan lokal server & Chromium browser
+          python -m http.server 8000 &
+          chromium-browser --no-sandbox --disable-setuid-sandbox --start-fullscreen http://localhost:8000 &
+          sleep 5
+
+          # 3. Jalankan bot chat Python di background
+          python bot.py &
+
+          # 4. Stream tampilan layar virtual ke YouTube via FFmpeg
+          ffmpeg -f x11grab -video_size 1280x720 -i :99.0 \
+            -f lavfi -i anullsrc \
+            -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
+            -c:a aac -b:a 128k -ar 44100 \
+            -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
