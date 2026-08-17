@@ -1642,9 +1642,60 @@ function animate() {
             ).join('');
 
 
-        // Update lap utama
-        lapDisplay.innerText =
-            `${Math.min(
-                sortedCars[0].lap,
-                TOTAL_LAPS
-            )} / ${TOTAL_L
+
+// Update lap utama
+lapDisplay.innerText =
+    `${Math.min(sortedCars[0].lap, TOTAL_LAPS)} / ${TOTAL_LAPS}`;
+
+// Kamera mengikuti P1
+const leaderCar = sortedCars[0];
+
+const leaderNormProg =
+    leaderCar.progress % 1.0;
+
+const leaderPt =
+    trackCurve.getPointAt(leaderNormProg);
+
+const leaderTang =
+    trackCurve.getTangentAt(leaderNormProg);
+
+// Kamera dari belakang dan sedikit di atas
+const camOffset =
+    leaderTang.clone()
+        .multiplyScalar(-24)
+        .add(new THREE.Vector3(0, 12, 0));
+
+camera.position.copy(
+    leaderPt.clone().add(camOffset)
+);
+
+camera.lookAt(
+    leaderPt.clone().add(
+        leaderTang.clone().multiplyScalar(12)
+    )
+);
+
+    }
+
+    renderer.render(scene, camera);
+}
+
+// Mulai animasi
+animate();
+
+// Responsif terhadap perubahan ukuran layar
+function resizeRenderer() {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(width, height, false);
+}
+
+window.addEventListener('resize', resizeRenderer);
+
+</script>
+</body>
+</html>
