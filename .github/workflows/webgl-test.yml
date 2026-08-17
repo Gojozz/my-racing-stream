@@ -47,7 +47,7 @@ jobs:
             --window-size=1280,720 \
             --kiosk \
             --no-first-run \
-            http://127.0.0.1:8000/webgl.html &
+            http://127.0.0.1:8000/index.html &
 
           sleep 10
 
