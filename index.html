@@ -1675,6 +1675,7 @@ const posClasses = [
 ];
 
 let clock = new THREE.Clock();
+let lastFrameTime = performance.now();
 
 
 // =========================================================
@@ -1698,6 +1699,22 @@ function animate() {
     requestAnimationFrame(animate);
 
     const time = clock.getElapsedTime();
+
+    const now = performance.now();
+
+    // Waktu nyata antar frame.
+    // 1.0 = 60 FPS, 2.0 = 30 FPS.
+    // Maksimum 50ms untuk mencegah lonjakan saat frame drop.
+    const deltaSeconds =
+        Math.min(
+            (now - lastFrameTime) / 1000,
+            0.05
+        );
+
+    lastFrameTime = now;
+
+    const frameFactor =
+        deltaSeconds * 60;
 
     if (!isRaceFinished) {
 
@@ -1732,8 +1749,8 @@ function animate() {
                     Math.random() * 6;
             }
 
-            car.aiTimer -= 1 / 60;
-            car.aiBurstTimer -= 1 / 60;
+            car.aiTimer -= deltaSeconds;
+            car.aiBurstTimer -= deltaSeconds;
 
             // Tentukan target speed baru secara acak
             if (car.aiTimer <= 0) {
@@ -1767,9 +1784,9 @@ function animate() {
                 Math.random() * 0.000012;
 
             if (car.aiSpeed < car.aiTargetSpeed) {
-                car.aiSpeed += acceleration;
+                car.aiSpeed += acceleration * frameFactor;
             } else {
-                car.aiSpeed -= acceleration;
+                car.aiSpeed -= acceleration * frameFactor;
             }
 
             // Batas agar mobil tidak terlalu lambat/cepat
@@ -1785,8 +1802,14 @@ function animate() {
             const currentSpeed =
                 car.aiSpeed;
 
-            car.progress += currentSpeed;
-            car.totalDistance += currentSpeed;
+            const distanceThisFrame =
+                currentSpeed * frameFactor;
+
+            car.progress +=
+                distanceThisFrame;
+
+            car.totalDistance +=
+                distanceThisFrame;
 
 
             // Hitung lap
@@ -2161,5 +2184,44 @@ function resizeRenderer() {
 window.addEventListener('resize', resizeRenderer);
 
 </script>
+
+<!-- Racing Background Music -->
+<audio
+    id="race-bgm"
+    src="assets/audio/bgm-car.mp3"
+    loop
+    preload="auto">
+</audio>
+
+<script>
+(function () {
+    const bgm = document.getElementById('race-bgm');
+
+    bgm.volume = 0.20;
+    bgm.loop = true;
+
+    function startBGM() {
+        bgm.play().catch(() => {
+            console.log('BGM autoplay menunggu izin Chromium.');
+        });
+    }
+
+    startBGM();
+
+    // Fallback jika browser menunda autoplay
+    document.addEventListener(
+        'click',
+        startBGM,
+        { once: true }
+    );
+
+    document.addEventListener(
+        'touchstart',
+        startBGM,
+        { once: true }
+    );
+})();
+</script>
+
 </body>
 </html>

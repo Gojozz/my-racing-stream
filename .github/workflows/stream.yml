@@ -62,6 +62,8 @@ jobs:
             --window-size=1280,720 \
             --kiosk \
             --no-first-run \
+            --autoplay-policy=no-user-gesture-required \
+            --disable-features=Translate,TranslateUI \
             http://127.0.0.1:8000/index.html &
 
           sleep 10
