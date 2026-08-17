@@ -1677,6 +1677,22 @@ const posClasses = [
 let clock = new THREE.Clock();
 
 
+// =========================================================
+// SPECTATOR CAMERA STATE
+// =========================================================
+let spectatorMode = 0;
+let spectatorTimer = 5;
+let spectatorBlend = 0;
+let spectatorLookX = 0;
+let spectatorLookY = 0;
+let spectatorLookZ = 0;
+
+// =========================================================
+// FINISH PHASE
+// =========================================================
+let raceFinishing = false;
+let finishedCount = 0;
+
 function animate() {
 
     requestAnimationFrame(animate);
@@ -1687,16 +1703,87 @@ function animate() {
 
         cars.forEach((car, index) => {
 
-            // Variasi kecepatan dinamis
-            const speedVariation =
-                Math.sin(
-                    time * 2 +
-                    index * 100
-                ) * 0.00022;
+            if (car.finished === undefined) {
+                car.finished = false;
+            }
+
+            // =====================================================
+            // RANDOM AI SPEED
+            // Tidak lagi menggunakan sinus atau baseSpeed tetap.
+            // Setiap mobil memiliki ritme akselerasi/deselerasi
+            // sendiri dan sesekali mendapat burst untuk overtake.
+            // =====================================================
+
+            if (car.aiSpeed === undefined) {
+                car.aiSpeed =
+                    0.00068 +
+                    Math.random() * 0.00016;
+
+                car.aiTargetSpeed =
+                    0.00058 +
+                    Math.random() * 0.00040;
+
+                car.aiTimer =
+                    0.5 +
+                    Math.random() * 2.0;
+
+                car.aiBurstTimer =
+                    2 +
+                    Math.random() * 6;
+            }
+
+            car.aiTimer -= 1 / 60;
+            car.aiBurstTimer -= 1 / 60;
+
+            // Tentukan target speed baru secara acak
+            if (car.aiTimer <= 0) {
+
+                car.aiTargetSpeed =
+                    0.00058 +
+                    Math.random() * 0.00040;
+
+                car.aiTimer =
+                    0.7 +
+                    Math.random() * 2.8;
+            }
+
+            // Peluang burst / overtake
+            if (car.aiBurstTimer <= 0) {
+
+                if (Math.random() < 0.55) {
+                    car.aiTargetSpeed +=
+                        0.00008 +
+                        Math.random() * 0.00012;
+                }
+
+                car.aiBurstTimer =
+                    3 +
+                    Math.random() * 8;
+            }
+
+            // Akselerasi dan deselerasi halus
+            const acceleration =
+                0.000018 +
+                Math.random() * 0.000012;
+
+            if (car.aiSpeed < car.aiTargetSpeed) {
+                car.aiSpeed += acceleration;
+            } else {
+                car.aiSpeed -= acceleration;
+            }
+
+            // Batas agar mobil tidak terlalu lambat/cepat
+            car.aiSpeed =
+                Math.max(
+                    0.00052,
+                    Math.min(
+                        0.00102,
+                        car.aiSpeed
+                    )
+                );
 
             const currentSpeed =
-                car.baseSpeed +
-                speedVariation;
+                car.aiSpeed;
 
             car.progress += currentSpeed;
             car.totalDistance += currentSpeed;
@@ -1710,32 +1797,81 @@ function animate() {
 
                 car.lap = newLap;
 
-                if (car.lap > TOTAL_LAPS) {
+                if (
+                    car.lap > TOTAL_LAPS &&
+                    !car.finished
+                ) {
 
-                    isRaceFinished = true;
+                    // Mobil sudah melewati garis finish,
+                    // tetapi TETAP melanjutkan pergerakannya.
+                    car.finished = true;
 
-                    finishBanner.style.display =
-                        'block';
+                    finishedCount++;
 
-                    setTimeout(() => {
-
-                        cars.forEach((c, i) => {
-
-                            c.progress =
-                                i * 0.008;
-
-                            c.totalDistance =
-                                c.progress;
-
-                            c.lap = 1;
-                        });
-
-                        isRaceFinished = false;
+                    // Mobil pertama yang finish memulai
+                    // fase kamera finish.
+                    if (!raceFinishing) {
+                        raceFinishing = true;
 
                         finishBanner.style.display =
-                            'none';
+                            'block';
+                    }
 
-                    }, 6000);
+                    // Race baru benar-benar selesai
+                    // setelah SEMUA mobil finish.
+                    if (finishedCount >= cars.length) {
+
+                        isRaceFinished = true;
+
+                        setTimeout(() => {
+
+                            cars.forEach((c, i) => {
+
+                                c.progress =
+                                    i * 0.008;
+
+                                c.totalDistance =
+                                    c.progress;
+
+                                c.lap = 1;
+
+                                c.finished =
+                                    false;
+
+                                // Random speed baru
+                                c.aiSpeed =
+                                    0.00062 +
+                                    Math.random() *
+                                    0.00020;
+
+                                c.aiTargetSpeed =
+                                    0.00058 +
+                                    Math.random() *
+                                    0.00040;
+
+                                c.aiTimer =
+                                    0.5 +
+                                    Math.random() * 2;
+
+                                c.aiBurstTimer =
+                                    2 +
+                                    Math.random() * 6;
+                            });
+
+                            finishedCount = 0;
+                            raceFinishing = false;
+                            isRaceFinished = false;
+
+                            finishBanner.style.display =
+                                'none';
+
+                            // Kamera kembali menjadi spectator
+                            spectatorMode = 0;
+                            spectatorTimer =
+                                4 + Math.random() * 3;
+
+                        }, 5000);
+                    }
                 }
             }
 
@@ -1830,33 +1966,178 @@ function animate() {
 lapDisplay.innerText =
     `${Math.min(sortedCars[0].lap, TOTAL_LAPS)} / ${TOTAL_LAPS}`;
 
-// Kamera mengikuti P1
-const leaderCar = sortedCars[0];
+// =========================================================
+// DYNAMIC SPECTATOR CAMERA
+// =========================================================
 
-const leaderNormProg =
-    leaderCar.progress % 1.0;
+spectatorTimer -= 1 / 60;
 
-const leaderPt =
-    trackCurve.getPointAt(leaderNormProg);
+if (spectatorTimer <= 0) {
 
-const leaderTang =
-    trackCurve.getTangentAt(leaderNormProg);
+    // 0 = P1
+    // 1 = P2
+    // 2 = P3
+    // 3 = group
+    // 4 = wide
 
-// Kamera dari belakang dan sedikit di atas
-const camOffset =
-    leaderTang.clone()
-        .multiplyScalar(-24)
-        .add(new THREE.Vector3(0, 12, 0));
+    let nextMode =
+        Math.floor(Math.random() * 5);
 
-camera.position.copy(
-    leaderPt.clone().add(camOffset)
-);
+    // Hindari langsung mengulang mode
+    if (nextMode === spectatorMode) {
+        nextMode =
+            (nextMode + 1) % 5;
+    }
 
-camera.lookAt(
-    leaderPt.clone().add(
-        leaderTang.clone().multiplyScalar(12)
-    )
-);
+    spectatorMode = nextMode;
+
+    // Pergantian setiap 4-7 detik
+    spectatorTimer =
+        4 + Math.random() * 3;
+}
+
+let camCar = sortedCars[0];
+
+if (spectatorMode === 1) {
+    camCar =
+        sortedCars[1] || sortedCars[0];
+}
+
+if (spectatorMode === 2) {
+    camCar =
+        sortedCars[2] || sortedCars[0];
+}
+
+// ---------------------------------------------------------
+// P1 / P2 / P3
+// ---------------------------------------------------------
+
+if (
+    spectatorMode === 0 ||
+    spectatorMode === 1 ||
+    spectatorMode === 2
+) {
+
+    const prog =
+        camCar.progress % 1.0;
+
+    const pt =
+        trackCurve.getPointAt(prog);
+
+    const tang =
+        trackCurve.getTangentAt(prog);
+
+    const wantedPosition =
+        pt.clone()
+            .add(
+                tang.clone()
+                    .multiplyScalar(-24)
+            )
+            .add(
+                new THREE.Vector3(0, 12, 0)
+            );
+
+    const wantedLook =
+        pt.clone()
+            .add(
+                tang.clone()
+                    .multiplyScalar(12)
+            );
+
+    camera.position.lerp(
+        wantedPosition,
+        0.035
+    );
+
+    camera.lookAt(
+        wantedLook
+    );
+}
+
+// ---------------------------------------------------------
+// GROUP SHOT
+// ---------------------------------------------------------
+
+else if (spectatorMode === 3) {
+
+    const a =
+        sortedCars[0];
+
+    const b =
+        sortedCars[1] || a;
+
+    const c =
+        sortedCars[2] || a;
+
+    const average =
+        (
+            a.progress +
+            b.progress +
+            c.progress
+        ) / 3;
+
+    const prog =
+        average % 1.0;
+
+    const pt =
+        trackCurve.getPointAt(prog);
+
+    const tang =
+        trackCurve.getTangentAt(prog);
+
+    const wantedPosition =
+        pt.clone()
+            .add(
+                tang.clone()
+                    .multiplyScalar(-30)
+            )
+            .add(
+                new THREE.Vector3(0, 18, 0)
+            );
+
+    camera.position.lerp(
+        wantedPosition,
+        0.025
+    );
+
+    camera.lookAt(pt);
+}
+
+// ---------------------------------------------------------
+// WIDE SHOT
+// ---------------------------------------------------------
+
+else if (spectatorMode === 4) {
+
+    const leader =
+        sortedCars[0];
+
+    const prog =
+        leader.progress % 1.0;
+
+    const pt =
+        trackCurve.getPointAt(prog);
+
+    const tang =
+        trackCurve.getTangentAt(prog);
+
+    const wantedPosition =
+        pt.clone()
+            .add(
+                tang.clone()
+                    .multiplyScalar(-38)
+            )
+            .add(
+                new THREE.Vector3(0, 25, 0)
+            );
+
+    camera.position.lerp(
+        wantedPosition,
+        0.018
+    );
+
+    camera.lookAt(pt);
+}
 
     }
 
