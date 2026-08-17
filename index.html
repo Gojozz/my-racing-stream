@@ -1,96 +1,299 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>3D TEST</title>
-<style>
-html,body {
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#111;
-}
-canvas {
-    display:block;
-}
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D AI Multi-Car Race NFS</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        canvas { display: block; }
+        
+        /* HUD NFS Style */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .hud-card {
+            background: rgba(0, 0, 0, 0.65);
+            padding: 12px 18px;
+            border-left: 4px solid #00ffff;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(0,255,255,0.2);
+            backdrop-filter: blur(4px);
+        }
+        .hud-title { font-size: 11px; letter-spacing: 2px; color: #00ffff; font-weight: 800; text-transform: uppercase; }
+        .hud-value { font-size: 28px; font-weight: 900; font-style: italic; margin-bottom: 8px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        
+        /* Leaderboard Panel */
+        #leaderboard {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .leader-item { margin: 4px 0; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+        .p1 { color: #ffcc00; }
+        .p2 { color: #cccccc; }
+        .p3 { color: #cd7f32; }
 
+        #finish-banner {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0055;
+            font-size: 56px;
+            font-weight: 900;
+            font-style: italic;
+            text-shadow: 0 0 20px #ff0055, 0 0 40px #ffffff;
+            display: none;
+            text-align: center;
+            z-index: 20;
+        }
+    </style>
+</head>
 <body>
 
-<script>
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x202040);
+    <div id="hud">
+        <div class="hud-card">
+            <div class="hud-title">LAP</div>
+            <div class="hud-value" id="lap-display">1 / 3</div>
+            
+            <div class="hud-title">POSISI BARA</div>
+            <div id="leaderboard">
+                <!-- Live Leaderboard -->
+            </div>
+        </div>
+    </div>
 
-const camera = new THREE.PerspectiveCamera(
-    60,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    100
-);
+    <div id="finish-banner">FINISH!</div>
 
-camera.position.set(0, 2, 7);
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        const TOTAL_LAPS = 3;
+        let isRaceFinished = false;
 
-const renderer = new THREE.WebGLRenderer({
-    antialias:true
-});
+        // 1. SCENE, CAMERA, RENDERER
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050512, 0.007);
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(1);
-document.body.appendChild(renderer.domElement);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(1280, 720);
+        renderer.setPixelRatio(1);
+        document.body.appendChild(renderer.domElement);
 
-// LIGHT
-const ambient = new THREE.AmbientLight(0xffffff, 1.5);
-scene.add(ambient);
+        // 2. LIGHTING
+        const ambientLight = new THREE.AmbientLight(0x333355, 1.8);
+        scene.add(ambientLight);
 
-const light = new THREE.DirectionalLight(0xffffff, 3);
-light.position.set(5,10,5);
-scene.add(light);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(50, 100, 50);
+        scene.add(dirLight);
 
-// CUBE
-const geometry = new THREE.BoxGeometry(2,2,2);
+        // 3. SIRKUIT 3D BERLIKU
+        const trackPoints = [
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(120, 0, 60),
+            new THREE.Vector3(200, 0, -30),
+            new THREE.Vector3(240, 0, -150),
+            new THREE.Vector3(130, 0, -240),
+            new THREE.Vector3(10, 0, -180),
+            new THREE.Vector3(-90, 0, -250),
+            new THREE.Vector3(-200, 0, -160),
+            new THREE.Vector3(-140, 0, -50),
+            new THREE.Vector3(-60, 0, 30)
+        ];
 
-const material = new THREE.MeshStandardMaterial({
-    color:0x00ff88,
-    metalness:0.2,
-    roughness:0.4
-});
+        const trackCurve = new THREE.CatmullRomCurve3(trackPoints, true);
+        
+        // Jalan Aspal
+        const trackGeometry = new THREE.TubeGeometry(trackCurve, 250, 14, 8, true);
+        const trackMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x111116, 
+            roughness: 0.3, 
+            metalness: 0.7,
+            side: THREE.BackSide 
+        });
+        const trackMesh = new THREE.Mesh(trackGeometry, trackMaterial);
+        scene.add(trackMesh);
 
-const cube = new THREE.Mesh(geometry,material);
-scene.add(cube);
+        // Pagar Neon Samping
+        const railGeometry = new THREE.TubeGeometry(trackCurve, 250, 14.3, 8, true);
+        const railMaterial = new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true });
+        const railMesh = new THREE.Mesh(railGeometry, railMaterial);
+        scene.add(railMesh);
 
-// FLOOR
-const floorGeo = new THREE.PlaneGeometry(20,20);
+        // Garis Finish
+        const startPoint = trackCurve.getPointAt(0);
+        const finishGeo = new THREE.BoxGeometry(28, 0.2, 2);
+        const finishMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const finishLine = new THREE.Mesh(finishGeo, finishMat);
+        finishLine.position.copy(startPoint);
+        scene.add(finishLine);
 
-const floorMat = new THREE.MeshStandardMaterial({
-    color:0x333333
-});
+        // 4. MAKER MOBIL BALAP
+        function createCarMesh(colorHex) {
+            const carGroup = new THREE.Group();
+            
+            // Bodi Utama
+            const bodyGeo = new THREE.BoxGeometry(2.2, 0.8, 4.2);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.8, roughness: 0.2 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.5;
+            carGroup.add(body);
 
-const floor = new THREE.Mesh(floorGeo,floorMat);
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -1.5;
-scene.add(floor);
+            // Kabin
+            const cabinGeo = new THREE.BoxGeometry(1.7, 0.6, 2.0);
+            const cabinMat = new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.1 });
+            const cabin = new THREE.Mesh(cabinGeo, cabinMat);
+            cabin.position.set(0, 1.1, -0.3);
+            carGroup.add(cabin);
 
-// ANIMATION
-function animate() {
-    requestAnimationFrame(animate);
+            // Lampu Depan (Glow)
+            const lightGeo = new THREE.BoxGeometry(0.5, 0.18, 0.1);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const leftLight = new THREE.Mesh(lightGeo, lightMat);
+            leftLight.position.set(-0.75, 0.5, 2.11);
+            const rightLight = leftLight.clone();
+            rightLight.position.x = 0.75;
+            carGroup.add(leftLight);
+            carGroup.add(rightLight);
 
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.02;
+            return carGroup;
+        }
 
-    renderer.render(scene,camera);
-}
+        // 5. ARRAY 3 MOBIL AI DENGAN SIFAT SALIP-MENYALIP
+        const cars = [
+            {
+                name: "Merah",
+                color: "#ff0055",
+                mesh: createCarMesh(0xff0055),
+                progress: 0.00,
+                baseSpeed: 0.00078,
+                speedFreq: 0.0012,
+                laneOffset: -3.5,
+                targetLane: -3.5,
+                lap: 1,
+                totalDistance: 0
+            },
+            {
+                name: "Biru",
+                color: "#00aaff",
+                mesh: createCarMesh(0x00aaff),
+                progress: 0.012,
+                baseSpeed: 0.00076,
+                speedFreq: 0.0018,
+                laneOffset: 0.0,
+                targetLane: 0.0,
+                lap: 1,
+                totalDistance: 0.012
+            },
+            {
+                name: "Kuning",
+                color: "#ffee00",
+                mesh: createCarMesh(0xffee00),
+                progress: 0.024,
+                baseSpeed: 0.00075,
+                speedFreq: 0.0015,
+                laneOffset: 3.5,
+                targetLane: 3.5,
+                lap: 1,
+                totalDistance: 0.024
+            }
+        ];
 
-animate();
+        cars.forEach(car => scene.add(car.mesh));
 
-window.addEventListener('resize',()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth,window.innerHeight);
-});
-</script>
+        // 6. ANIMASI & LOGIKA BALAPAN
+        const lapDisplay = document.getElementById('lap-display');
+        const leaderboardEl = document.getElementById('leaderboard');
+        const finishBanner = document.getElementById('finish-banner');
 
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+
+            if (!isRaceFinished) {
+                cars.forEach((car, index) => {
+                    // Variasi kecepatan dinamis menggunakan osilasi sinus (simulasi salip)
+                    const speedVariation = Math.sin(time * 2 + index * 100) * 0.00022;
+                    const currentSpeed = car.baseSpeed + speedVariation;
+
+                    car.progress += currentSpeed;
+                    car.totalDistance += currentSpeed;
+
+                    // Hitung Lap
+                    const newLap = Math.floor(car.totalDistance) + 1;
+                    if (newLap !== car.lap) {
+                        car.lap = newLap;
+                        if (car.lap > TOTAL_LAPS) {
+                            isRaceFinished = true;
+                            finishBanner.style.display = 'block';
+
+                            // Restart sesi otomatis setelah 6 detik
+                            setTimeout(() => {
+                                cars.forEach((c, i) => {
+                                    c.progress = i * 0.01;
+                                    c.totalDistance = c.progress;
+                                    c.lap = 1;
+                                });
+                                isRaceFinished = false;
+                                finishBanner.style.display = 'none';
+                            }, 6000);
+                        }
+                    }
+
+                    // Pindah Jalur (*Lane Switch*) Saat Menyalip
+                    car.laneOffset += (car.targetLane - car.laneOffset) * 0.05;
+
+                    // Posisi & Vektor Arah di Kurva
+                    const normProgress = car.progress % 1.0;
+                    const point = trackCurve.getPointAt(normProgress);
+                    const tangent = trackCurve.getTangentAt(normProgress);
+
+                    // Hitung Vektor Tegak Lurus (Normal) untuk geser jalur kiri/kanan
+                    const sideVector = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+                    const finalPosition = point.clone().add(sideVector.multiplyScalar(car.laneOffset));
+
+                    car.mesh.position.copy(finalPosition);
+                    car.mesh.lookAt(finalPosition.clone().add(tangent));
+                });
+
+                // Tentukan Pemimpin Balapan (P1, P2, P3)
+                const sortedCars = [...cars].sort((a, b) => b.totalDistance - a.totalDistance);
+
+                // Update HUD Leaderboard
+                leaderboardEl.innerHTML = sortedCars.map((car, pos) => `
+                    <div class="leader-item ${pos === 0 ? 'p1' : pos === 1 ? 'p2' : 'p3'}">
+                        <span>P${pos + 1} - ${car.name}</span>
+                        <span>LAP ${Math.min(car.lap, TOTAL_LAPS)}</span>
+                    </div>
+                `).join('');
+
+                lapDisplay.innerText = `${Math.min(sortedCars[0].lap, TOTAL_LAPS)} / ${TOTAL_LAPS}`;
+
+                // Kamera Mengikuti Pemimpin Balapan (Car P1)
+                const leaderCar = sortedCars[0];
+                const leaderNormProg = leaderCar.progress % 1.0;
+                const leaderPt = trackCurve.getPointAt(leaderNormProg);
+                const leaderTang = trackCurve.getTangentAt(leaderNormProg);
+
+                const camOffset = leaderTang.clone().multiplyScalar(-22).add(new THREE.Vector3(0, 10, 0));
+                camera.position.copy(leaderPt).add(camOffset);
+                camera.lookAt(leaderPt.clone().add(leaderTang.clone().multiplyScalar(10)));
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
 </body>
 </html>

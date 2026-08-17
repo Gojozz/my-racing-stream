@@ -3,6 +3,12 @@ name: YouTube Live Stream
 on:
   workflow_dispatch:
 
+# MENCEGAH DUPLIKASI STREAM:
+# Batal workflow lama secara otomatis jika ada workflow baru yang dipicu
+concurrency:
+  group: youtube-live-stream
+  cancel-in-progress: true
+
 jobs:
   stream:
     runs-on: ubuntu-latest
