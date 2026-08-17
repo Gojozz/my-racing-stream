@@ -1,39 +1,190 @@
 <!DOCTYPE html>
-<html lang="id" class="notranslate" translate="no">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="google" content="notranslate">
-    <title>Stream Game Balap 3D</title>
+    <title>3D Racing Test</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; }
-        #canvas-container { width: 100vw; height: 100vh; }
-        .goog-te-banner-frame, #google_translate_element { display: none !important; }
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
-</head>
-<body>
-    <div id="canvas-container"></div>
-    <script>
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        const light = new THREE.DirectionalLight(0xffffff, 1);
-        light.position.set(0, 50, 20);
-        scene.add(light);
-        scene.add(new THREE.AmbientLight(0x404040, 2));
-
-        camera.position.set(0, 40, 30);
-        camera.lookAt(0, 0, 0);
-
-        function animate() {
-            requestAnimationFrame(animate);
-            renderer.render(scene, camera);
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #87ceeb;
         }
-        animate();
-    </script>
+        canvas {
+            display: block;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+
+<body>
+
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 80, 300);
+
+const camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+
+const renderer = new THREE.WebGLRenderer({
+    antialias: true
+});
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(1);
+document.body.appendChild(renderer.domElement);
+
+
+// ===== LIGHT =====
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(50, 100, 50);
+scene.add(sun);
+
+const ambient = new THREE.AmbientLight(0xffffff, 1);
+scene.add(ambient);
+
+
+// ===== GROUND =====
+const groundGeometry = new THREE.PlaneGeometry(300, 300);
+const groundMaterial = new THREE.MeshStandardMaterial({
+    color: 0x228b22
+});
+
+const ground = new THREE.Mesh(
+    groundGeometry,
+    groundMaterial
+);
+
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+
+// ===== TRACK =====
+const trackGeometry = new THREE.PlaneGeometry(35, 260);
+
+const trackMaterial = new THREE.MeshStandardMaterial({
+    color: 0x333333
+});
+
+const track = new THREE.Mesh(
+    trackGeometry,
+    trackMaterial
+);
+
+track.rotation.x = -Math.PI / 2;
+track.position.y = 0.02;
+scene.add(track);
+
+
+// ===== TRACK LINES =====
+const lineMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff
+});
+
+for (let z = -120; z <= 120; z += 20) {
+
+    const lineGeometry = new THREE.BoxGeometry(1, 0.05, 8);
+
+    const line = new THREE.Mesh(
+        lineGeometry,
+        lineMaterial
+    );
+
+    line.position.set(0, 0.06, z);
+
+    scene.add(line);
+}
+
+
+// ===== RACING CARS / TEST OBJECTS =====
+const colors = [
+    0xff0000,
+    0x0066ff,
+    0xffff00,
+    0xff00ff,
+    0x00ffff
+];
+
+for (let i = 0; i < 5; i++) {
+
+    const bodyGeometry = new THREE.BoxGeometry(
+        4,
+        1.5,
+        7
+    );
+
+    const bodyMaterial = new THREE.MeshStandardMaterial({
+        color: colors[i]
+    });
+
+    const car = new THREE.Mesh(
+        bodyGeometry,
+        bodyMaterial
+    );
+
+    car.position.set(
+        -10 + i * 5,
+        1,
+        -40
+    );
+
+    scene.add(car);
+}
+
+
+// ===== CAMERA =====
+camera.position.set(
+    0,
+    45,
+    70
+);
+
+camera.lookAt(
+    0,
+    0,
+    0
+);
+
+
+// ===== ANIMATION =====
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    renderer.render(
+        scene,
+        camera
+    );
+}
+
+animate();
+
+
+// ===== RESIZE =====
+window.addEventListener(
+    'resize',
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+    }
+);
+</script>
+
 </body>
 </html>
