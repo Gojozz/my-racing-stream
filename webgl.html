@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body style="margin:0;background:white">
+<canvas id="c" width="1280" height="720"></canvas>
+<script>
+const canvas = document.getElementById("c");
+const gl = canvas.getContext("webgl");
+
+if (!gl) {
+    document.body.innerHTML =
+        '<h1 style="color:red;font-size:60px">WEBGL FAILED</h1>';
+} else {
+    gl.clearColor(0.1, 0.5, 0.9, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    const text = document.createElement("div");
+    text.style =
+        "position:absolute;top:250px;left:300px;color:white;font-size:70px;font-family:Arial";
+    text.textContent = "WEBGL OK";
+    document.body.appendChild(text);
+}
+</script>
+</body>
+</html>
