@@ -51,7 +51,6 @@ jobs:
           sleep 5
 
           # 4. Jalankan bot chat Python di background
-          python bot.py &
 
           # 5. Stream ke YouTube via FFmpeg
           ffmpeg -draw_mouse 0 -f x11grab -video_size 1280x720 -i :99.0 \
