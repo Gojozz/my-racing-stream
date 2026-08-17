@@ -901,49 +901,207 @@ trackPoints.forEach(
 
 
 /* =========================================================
-   FINISH LINE
+   FINISH LINE CHECKERBOARD
 ========================================================= */
 
-const startPoint =
-    trackCurve.getPointAt(0);
+const startPoint = trackCurve.getPointAt(0);
+const finishTangent = trackCurve.getTangentAt(0);
 
-const finishGeo =
-    new THREE.BoxGeometry(
-        TRACK_WIDTH * 2,
-        0.08,
-        2.4
+const finishGroup = new THREE.Group();
+
+const checkerSize = 2.0;
+const checkerRows = 2;
+const checkerCols = 16;
+
+for (let row = 0; row < checkerRows; row++) {
+    for (let col = 0; col < checkerCols; col++) {
+
+        const geo = new THREE.BoxGeometry(
+            checkerSize,
+            0.10,
+            checkerSize
+        );
+
+        const mat = new THREE.MeshStandardMaterial({
+            color:
+                (row + col) % 2 === 0
+                    ? 0xffffff
+                    : 0x111111,
+            roughness: 0.8
+        });
+
+        const square = new THREE.Mesh(geo, mat);
+
+        square.position.set(
+            -TRACK_WIDTH + checkerSize / 2 +
+            col * checkerSize,
+
+            0,
+
+            -checkerSize / 2 +
+            row * checkerSize
+        );
+
+        square.castShadow = false;
+        square.receiveShadow = true;
+
+        finishGroup.add(square);
+    }
+}
+
+finishGroup.position.copy(startPoint);
+finishGroup.position.y = -0.58;
+
+finishGroup.lookAt(
+    startPoint.clone().add(finishTangent)
+);
+
+scene.add(finishGroup);
+
+
+/* =========================================================
+   START / FINISH FLAGS
+========================================================= */
+
+function createRaceFlag(x, z, side) {
+
+    const group = new THREE.Group();
+
+    const poleGeo = new THREE.CylinderGeometry(
+        0.12,
+        0.12,
+        7,
+        8
     );
 
-const finishMat =
-    new THREE.MeshStandardMaterial({
-        color: 0xffffff,
+    const poleMat = new THREE.MeshStandardMaterial({
+        color: 0xeeeeee,
+        metalness: 0.5,
+        roughness: 0.4
+    });
+
+    const pole = new THREE.Mesh(
+        poleGeo,
+        poleMat
+    );
+
+    pole.position.y = 3.5;
+    group.add(pole);
+
+    const flagGeo = new THREE.PlaneGeometry(
+        3.2,
+        1.8
+    );
+
+    const flagMat = new THREE.MeshStandardMaterial({
+        color: side === 1 ? 0xff2020 : 0x1e88e5,
+        side: THREE.DoubleSide,
         roughness: 0.7
     });
 
-const finishLine =
-    new THREE.Mesh(
-        finishGeo,
-        finishMat
+    const flag = new THREE.Mesh(
+        flagGeo,
+        flagMat
     );
 
-finishLine.position.copy(
-    startPoint
+    flag.position.set(
+        side * 1.5,
+        5.7,
+        0
+    );
+
+    group.add(flag);
+
+    group.position.set(
+        x,
+        -1.0,
+        z
+    );
+
+    group.castShadow = true;
+
+    scene.add(group);
+}
+
+const startSide =
+    new THREE.Vector3(
+        -finishTangent.z,
+        0,
+        finishTangent.x
+    ).normalize();
+
+createRaceFlag(
+    startPoint.x + startSide.x * (TRACK_WIDTH + 2),
+    startPoint.z + startSide.z * (TRACK_WIDTH + 2),
+    1
 );
 
-finishLine.position.y =
-    -0.60;
-
-const finishTangent =
-    trackCurve.getTangentAt(0);
-
-finishLine.lookAt(
-    startPoint.clone().add(
-        finishTangent
-    )
+createRaceFlag(
+    startPoint.x - startSide.x * (TRACK_WIDTH + 2),
+    startPoint.z - startSide.z * (TRACK_WIDTH + 2),
+    -1
 );
 
-scene.add(finishLine);
 
+/* =========================================================
+   FINISH ARCH
+========================================================= */
+
+const finishArch = new THREE.Group();
+
+const archMat = new THREE.MeshStandardMaterial({
+    color: 0x222222,
+    roughness: 0.6
+});
+
+const archPostGeo = new THREE.BoxGeometry(
+    0.7,
+    7,
+    0.7
+);
+
+const archLeft = new THREE.Mesh(
+    archPostGeo,
+    archMat
+);
+
+const archRight = archLeft.clone();
+
+archLeft.position.x = -TRACK_WIDTH;
+archRight.position.x = TRACK_WIDTH;
+
+archLeft.position.y = 3.5;
+archRight.position.y = 3.5;
+
+const archTopGeo = new THREE.BoxGeometry(
+    TRACK_WIDTH * 2 + 1.4,
+    0.8,
+    0.8
+);
+
+const archTop = new THREE.Mesh(
+    archTopGeo,
+    archMat
+);
+
+archTop.position.y = 7;
+
+finishArch.add(
+    archLeft,
+    archRight,
+    archTop
+);
+
+finishArch.position.copy(startPoint);
+finishArch.lookAt(
+    startPoint.clone().add(finishTangent)
+);
+
+finishArch.traverse(obj => {
+    if (obj.isMesh) obj.castShadow = true;
+});
+
+scene.add(finishArch);
 
 /* =========================================================
    TREES
@@ -1078,6 +1236,253 @@ for (
 }
 
 scene.add(decorGroup);
+
+
+
+/* =========================================================
+   TRIBUN PENONTON + GEDUNG KOTA
+========================================================= */
+
+function createGrandstand() {
+
+    const group = new THREE.Group();
+
+    const baseMat = new THREE.MeshStandardMaterial({
+        color: 0x555b63,
+        roughness: 0.9
+    });
+
+    const seatMat = new THREE.MeshStandardMaterial({
+        color: 0x2f78a8,
+        roughness: 0.8
+    });
+
+    // Struktur dasar tribun
+    const base = new THREE.Mesh(
+        new THREE.BoxGeometry(28, 3, 8),
+        baseMat
+    );
+
+    base.position.y = 0.5;
+    base.castShadow = true;
+    base.receiveShadow = true;
+
+    group.add(base);
+
+    // Baris tempat duduk sederhana
+    for (let row = 0; row < 4; row++) {
+
+        const seats = new THREE.Mesh(
+            new THREE.BoxGeometry(
+                25,
+                0.55,
+                1.3
+            ),
+            seatMat
+        );
+
+        seats.position.set(
+            0,
+            2.2 + row * 1.0,
+            -2.5 + row * 1.4
+        );
+
+        seats.castShadow = true;
+
+        group.add(seats);
+
+        // Penonton ringan
+        for (let i = 0; i < 12; i++) {
+
+            const person = new THREE.Mesh(
+                new THREE.SphereGeometry(
+                    0.22,
+                    6,
+                    6
+                ),
+                new THREE.MeshLambertMaterial({
+                    color:
+                        i % 3 === 0
+                            ? 0xffd54f
+                            : i % 3 === 1
+                                ? 0xffffff
+                                : 0xff5555
+                })
+            );
+
+            person.position.set(
+                -10 + i * 1.8,
+                2.8 + row * 1.0,
+                -2.8 + row * 1.4
+            );
+
+            group.add(person);
+        }
+    }
+
+    return group;
+}
+
+
+/* Tribun kiri dan kanan lintasan */
+
+const stadium1 = createGrandstand();
+const stadium2 = createGrandstand();
+
+const stadiumPoint =
+    trackCurve.getPointAt(0.25);
+
+const stadiumTangent =
+    trackCurve.getTangentAt(0.25);
+
+const stadiumSide =
+    new THREE.Vector3(
+        -stadiumTangent.z,
+        0,
+        stadiumTangent.x
+    ).normalize();
+
+stadium1.position.copy(
+    stadiumPoint.clone().add(
+        stadiumSide.clone().multiplyScalar(
+            TRACK_WIDTH + 18
+        )
+    )
+);
+
+stadium2.position.copy(
+    stadiumPoint.clone().add(
+        stadiumSide.clone().multiplyScalar(
+            -(TRACK_WIDTH + 18)
+        )
+    )
+);
+
+stadium1.rotation.y =
+    Math.atan2(
+        stadiumTangent.x,
+        stadiumTangent.z
+    );
+
+stadium2.rotation.y =
+    stadium1.rotation.y + Math.PI;
+
+stadium1.scale.setScalar(0.8);
+stadium2.scale.setScalar(0.8);
+
+scene.add(stadium1);
+scene.add(stadium2);
+
+
+/* =========================================================
+   GEDUNG LOW-POLY
+========================================================= */
+
+function createBuilding(height, width, depth) {
+
+    const group = new THREE.Group();
+
+    const buildingMat =
+        new THREE.MeshStandardMaterial({
+            color:
+                0x7a8794 +
+                Math.floor(Math.random() * 5) * 0x050505,
+            roughness: 0.9
+        });
+
+    const building = new THREE.Mesh(
+        new THREE.BoxGeometry(
+            width,
+            height,
+            depth
+        ),
+        buildingMat
+    );
+
+    building.position.y =
+        height / 2 - 1.0;
+
+    building.castShadow = true;
+    building.receiveShadow = true;
+
+    group.add(building);
+
+    // Atap
+    const roof = new THREE.Mesh(
+        new THREE.BoxGeometry(
+            width + 0.3,
+            0.3,
+            depth + 0.3
+        ),
+        new THREE.MeshStandardMaterial({
+            color: 0x34383d,
+            roughness: 0.8
+        })
+    );
+
+    roof.position.y = height - 0.85;
+
+    group.add(roof);
+
+    return group;
+}
+
+
+const cityGroup = new THREE.Group();
+
+for (let i = 0; i < 16; i++) {
+
+    const t =
+        (i / 16 + 0.07) % 1;
+
+    const point =
+        trackCurve.getPointAt(t);
+
+    const tangent =
+        trackCurve.getTangentAt(t);
+
+    const side =
+        new THREE.Vector3(
+            -tangent.z,
+            0,
+            tangent.x
+        ).normalize();
+
+    const direction =
+        i % 2 === 0 ? 1 : -1;
+
+    const distance =
+        TRACK_WIDTH +
+        48 +
+        Math.random() * 35;
+
+    const position =
+        point.clone().add(
+            side.multiplyScalar(
+                direction * distance
+            )
+        );
+
+    const building =
+        createBuilding(
+            8 + Math.random() * 16,
+            5 + Math.random() * 5,
+            5 + Math.random() * 5
+        );
+
+    building.position.set(
+        position.x,
+        -1.0,
+        position.z
+    );
+
+    building.rotation.y =
+        Math.random() * Math.PI;
+
+    cityGroup.add(building);
+}
+
+scene.add(cityGroup);
 
 
 /* =========================================================
