@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies & FFmpeg
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg xvfb chromium-browser
+          sudo apt-get install -y ffmpeg xvfb chromium-browser libgl1-mesa-dri libgl1-mesa-glx
           pip install -r requirements.txt
 
       - name: Start Stream
@@ -26,27 +26,27 @@ jobs:
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
           YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
         run: |
-          # 1. Jalankan layar virtual (Xvfb) resolusi 720p
+          # 1. Jalankan layar virtual (Xvfb)
           Xvfb :99 -screen 0 1280x720x24 &
           export DISPLAY=:99
           sleep 2
 
-          # 2. Jalankan lokal server
+          # 2. Jalankan HTTP server lokal
           python -m http.server 8000 &
-          sleep 2
+          sleep 3
 
-          # 3. Buka Chromium dengan Flag Paksa WebGL (Software Rendering)
+          # 3. Jalankan Chromium Mode Kiosk + SwiftShader (Render 3D via CPU)
           chromium-browser \
             --no-sandbox \
             --disable-setuid-sandbox \
-            --ignore-gpu-blocklist \
-            --enable-webgl \
-            --use-gl=angle \
-            --use-angle=gl-egl \
-            --disable-dev-shm-usage \
+            --test-type \
+            --kiosk \
             --window-size=1280,720 \
             --window-position=0,0 \
-            --start-fullscreen \
+            --ignore-gpu-blocklist \
+            --enable-webgl \
+            --use-gl=swiftshader \
+            --disable-dev-shm-usage \
             --no-first-run \
             http://localhost:8000 &
           sleep 5
@@ -54,7 +54,7 @@ jobs:
           # 4. Jalankan bot chat Python di background
           python bot.py &
 
-          # 5. Stream ke YouTube (Gunakan -draw_mouse 0 untuk menyembunyikan kursor)
+          # 5. Stream ke YouTube via FFmpeg
           ffmpeg -draw_mouse 0 -f x11grab -video_size 1280x720 -i :99.0 \
             -f lavfi -i anullsrc \
             -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
