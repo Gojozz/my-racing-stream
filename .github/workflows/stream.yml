@@ -17,7 +17,7 @@ jobs:
           sudo apt-get install -y \
             ffmpeg \
             xvfb \
-            chromium \
+            chromium-browser \
             imagemagick \
             mesa-utils \
             libgl1-mesa-dri
@@ -27,18 +27,14 @@ jobs:
           echo "===== FFMPEG ====="
           command -v ffmpeg
           ffmpeg -version | head -1
-
           echo "===== CHROMIUM ====="
-          command -v chromium
-          chromium --version
+          command -v chromium-browser || command -v chromium
+          chromium --version || chromium-browser --version
 
       - name: Start Stream
         env:
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
-
         run: |
-          set -e
-
           echo "===== START XVFB ====="
           Xvfb :99 -screen 0 1280x720x24 &
           export DISPLAY=:99
@@ -49,8 +45,7 @@ jobs:
           sleep 3
 
           echo "===== START CHROMIUM 3D ====="
-
-          chromium \
+          chromium-browser \
             --no-sandbox \
             --disable-dev-shm-usage \
             --disable-gpu-sandbox \
@@ -72,30 +67,38 @@ jobs:
           import -display :99 -window root /tmp/stream-screen.png
           file /tmp/stream-screen.png
 
-          echo "===== START FFMPEG ====="
+          echo "===== START FFMPEG LOOP ====="
+          set +e
 
-          ffmpeg \
-            -draw_mouse 0 \
-            -f x11grab \
-            -video_size 1280x720 \
-            -framerate 30 \
-            -i :99.0 \
-            -f lavfi \
-            -i anullsrc=channel_layout=stereo:sample_rate=44100 \
-            -c:v libx264 \
-            -preset ultrafast \
-            -tune zerolatency \
-            -pix_fmt yuv420p \
-            -r 30 \
-            -b:v 2500k \
-            -maxrate 2500k \
-            -bufsize 5000k \
-            -g 60 \
-            -c:a aac \
-            -b:a 128k \
-            -ar 44100 \
-            -f flv \
-            "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+          while true; do
+            ffmpeg \
+              -draw_mouse 0 \
+              -thread_queue_size 1024 \
+              -f x11grab \
+              -video_size 1280x720 \
+              -framerate 25 \
+              -i :99.0 \
+              -thread_queue_size 1024 \
+              -f lavfi \
+              -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+              -c:v libx264 \
+              -preset ultrafast \
+              -tune zerolatency \
+              -pix_fmt yuv420p \
+              -r 25 \
+              -b:v 2000k \
+              -maxrate 2000k \
+              -bufsize 4000k \
+              -g 50 \
+              -c:a aac \
+              -b:a 128k \
+              -ar 44100 \
+              -f flv \
+              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+
+            echo "FFmpeg terhenti. Reconnect dalam 3 detik..."
+            sleep 3
+          done
 
       - name: Upload diagnostic screenshot
         if: always()

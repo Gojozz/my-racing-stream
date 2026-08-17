@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/data/data/com.termux/files/home/my-racing-stream/bot.py", line 22, in <module>
+    start_bot()
+    ~~~~~~~~~^^
+  File "/data/data/com.termux/files/home/my-racing-stream/bot.py", line 8, in start_bot
+    chat = pytchat.create(video_id=VIDEO_ID)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/pytchat/core/__init__.py", line 6, in create
+    _vid = extract_video_id(video_id)
+  File "/data/data/com.termux/files/usr/lib/python3.14/site-packages/pytchat/util/__init__.py", line 91, in extract_video_id
+    raise InvalidVideoIdException(f"Invalid video id: {url_or_id}")
+pytchat.exceptions.InvalidVideoIdException: Invalid video id: MASUKKAN_VIDEO_ID_DISINI
