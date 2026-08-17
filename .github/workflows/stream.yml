@@ -27,7 +27,7 @@ jobs:
           ffmpeg -version | head -1
 
           echo "===== CHROMIUM CHECK ====="
-          command -v chromium || command -v chromium-browser
+          command -v chromium
 
       - name: Start Stream
         env:
@@ -58,7 +58,8 @@ jobs:
             --disable-gpu-sandbox \
             --ignore-gpu-blocklist \
             --enable-webgl \
-            --use-gl=desktop \
+            --use-angle=swiftshader \
+            --enable-unsafe-swiftshader \
             --window-size=1280,720 \
             --window-position=0,0 \
             --start-fullscreen \
