@@ -1,189 +1,95 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>3D Racing Test</title>
-    <style>
-        html, body {
-            margin: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #87ceeb;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<meta charset="UTF-8">
+<title>3D TEST</title>
+<style>
+html,body {
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#111;
+}
+canvas {
+    display:block;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 
 <body>
 
 <script>
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
-scene.fog = new THREE.Fog(0x87ceeb, 80, 300);
+scene.background = new THREE.Color(0x202040);
 
 const camera = new THREE.PerspectiveCamera(
     60,
     window.innerWidth / window.innerHeight,
     0.1,
-    1000
+    100
 );
 
+camera.position.set(0, 2, 7);
+
 const renderer = new THREE.WebGLRenderer({
-    antialias: true
+    antialias:true
 });
 
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(1);
 document.body.appendChild(renderer.domElement);
 
-
-// ===== LIGHT =====
-const sun = new THREE.DirectionalLight(0xffffff, 2);
-sun.position.set(50, 100, 50);
-scene.add(sun);
-
-const ambient = new THREE.AmbientLight(0xffffff, 1);
+// LIGHT
+const ambient = new THREE.AmbientLight(0xffffff, 1.5);
 scene.add(ambient);
 
+const light = new THREE.DirectionalLight(0xffffff, 3);
+light.position.set(5,10,5);
+scene.add(light);
 
-// ===== GROUND =====
-const groundGeometry = new THREE.PlaneGeometry(300, 300);
-const groundMaterial = new THREE.MeshStandardMaterial({
-    color: 0x228b22
+// CUBE
+const geometry = new THREE.BoxGeometry(2,2,2);
+
+const material = new THREE.MeshStandardMaterial({
+    color:0x00ff88,
+    metalness:0.2,
+    roughness:0.4
 });
 
-const ground = new THREE.Mesh(
-    groundGeometry,
-    groundMaterial
-);
+const cube = new THREE.Mesh(geometry,material);
+scene.add(cube);
 
-ground.rotation.x = -Math.PI / 2;
-scene.add(ground);
+// FLOOR
+const floorGeo = new THREE.PlaneGeometry(20,20);
 
-
-// ===== TRACK =====
-const trackGeometry = new THREE.PlaneGeometry(35, 260);
-
-const trackMaterial = new THREE.MeshStandardMaterial({
-    color: 0x333333
+const floorMat = new THREE.MeshStandardMaterial({
+    color:0x333333
 });
 
-const track = new THREE.Mesh(
-    trackGeometry,
-    trackMaterial
-);
+const floor = new THREE.Mesh(floorGeo,floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -1.5;
+scene.add(floor);
 
-track.rotation.x = -Math.PI / 2;
-track.position.y = 0.02;
-scene.add(track);
-
-
-// ===== TRACK LINES =====
-const lineMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffffff
-});
-
-for (let z = -120; z <= 120; z += 20) {
-
-    const lineGeometry = new THREE.BoxGeometry(1, 0.05, 8);
-
-    const line = new THREE.Mesh(
-        lineGeometry,
-        lineMaterial
-    );
-
-    line.position.set(0, 0.06, z);
-
-    scene.add(line);
-}
-
-
-// ===== RACING CARS / TEST OBJECTS =====
-const colors = [
-    0xff0000,
-    0x0066ff,
-    0xffff00,
-    0xff00ff,
-    0x00ffff
-];
-
-for (let i = 0; i < 5; i++) {
-
-    const bodyGeometry = new THREE.BoxGeometry(
-        4,
-        1.5,
-        7
-    );
-
-    const bodyMaterial = new THREE.MeshStandardMaterial({
-        color: colors[i]
-    });
-
-    const car = new THREE.Mesh(
-        bodyGeometry,
-        bodyMaterial
-    );
-
-    car.position.set(
-        -10 + i * 5,
-        1,
-        -40
-    );
-
-    scene.add(car);
-}
-
-
-// ===== CAMERA =====
-camera.position.set(
-    0,
-    45,
-    70
-);
-
-camera.lookAt(
-    0,
-    0,
-    0
-);
-
-
-// ===== ANIMATION =====
+// ANIMATION
 function animate() {
-
     requestAnimationFrame(animate);
 
-    renderer.render(
-        scene,
-        camera
-    );
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.02;
+
+    renderer.render(scene,camera);
 }
 
 animate();
 
-
-// ===== RESIZE =====
-window.addEventListener(
-    'resize',
-    () => {
-
-        camera.aspect =
-            window.innerWidth /
-            window.innerHeight;
-
-        camera.updateProjectionMatrix();
-
-        renderer.setSize(
-            window.innerWidth,
-            window.innerHeight
-        );
-    }
-);
+window.addEventListener('resize',()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth,window.innerHeight);
+});
 </script>
 
 </body>
