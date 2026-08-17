@@ -1,0 +1,71 @@
+name: WebGL 3D Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Chromium Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            chromium \
+            xvfb \
+            imagemagick \
+            mesa-utils \
+            libgl1-mesa-dri
+
+      - name: Start WebGL Test
+        run: |
+          set -e
+
+          echo "===== START XVFB ====="
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          sleep 3
+
+          echo "===== START HTTP SERVER ====="
+          python3 -m http.server 8000 > http.log 2>&1 &
+          sleep 3
+
+          echo "===== START CHROMIUM ====="
+
+          chromium \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu-sandbox \
+            --ignore-gpu-blocklist \
+            --enable-webgl \
+            --use-angle=swiftshader \
+            --enable-unsafe-swiftshader \
+            --window-size=1280,720 \
+            --kiosk \
+            --no-first-run \
+            http://127.0.0.1:8000 &
+
+          sleep 10
+
+          echo "===== CHROMIUM PROCESS ====="
+          ps aux | grep chromium | grep -v grep || true
+
+          echo "===== SCREENSHOT ====="
+          import -display :99 -window root /tmp/webgl-test.png
+
+          echo "===== SCREENSHOT INFO ====="
+          file /tmp/webgl-test.png
+          ls -lh /tmp/webgl-test.png
+
+      - name: Upload WebGL Screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webgl-test-screenshot
+          path: |
+            /tmp/webgl-test.png
+            http.log
