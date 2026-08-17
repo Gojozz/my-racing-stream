@@ -11,23 +11,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg xvfb chromium
-          pip install -r requirements.txt
+          sudo apt-get install -y \
+            ffmpeg \
+            xvfb \
+            chromium \
+            imagemagick \
+            mesa-utils \
+            libgl1-mesa-dri
 
-          echo "===== FFMPEG CHECK ====="
+      - name: Check dependencies
+        run: |
+          echo "===== FFMPEG ====="
           command -v ffmpeg
           ffmpeg -version | head -1
 
-          echo "===== CHROMIUM CHECK ====="
+          echo "===== CHROMIUM ====="
           command -v chromium
+          chromium --version
 
       - name: Start Stream
         env:
@@ -36,43 +39,40 @@ jobs:
         run: |
           set -e
 
-          echo "===== STARTING STREAM ====="
-
-          export LIBGL_ALWAYS_SOFTWARE=1
-          export GALLIUM_DRIVER=llvmpipe
-
           echo "===== START XVFB ====="
           Xvfb :99 -screen 0 1280x720x24 &
           export DISPLAY=:99
           sleep 3
 
           echo "===== START HTTP SERVER ====="
-          python -m http.server 8000 > http.log 2>&1 &
+          python3 -m http.server 8000 > http.log 2>&1 &
           sleep 3
 
-          echo "===== START CHROMIUM ====="
+          echo "===== START CHROMIUM 3D ====="
 
           chromium \
             --no-sandbox \
-            --disable-setuid-sandbox \
+            --disable-dev-shm-usage \
             --disable-gpu-sandbox \
             --ignore-gpu-blocklist \
             --enable-webgl \
             --use-angle=swiftshader \
             --enable-unsafe-swiftshader \
             --window-size=1280,720 \
-            --window-position=0,0 \
-            --start-fullscreen \
             --kiosk \
-            --disable-dev-shm-usage \
             --no-first-run \
-            http://127.0.0.1:8000 &
+            http://127.0.0.1:8000/index.html &
 
-          sleep 8
+          sleep 10
 
-          echo "===== CHROMIUM STARTED ====="
+          echo "===== CHROMIUM PROCESS ====="
+          ps aux | grep chromium | grep -v grep || true
 
-          echo "===== STARTING FFMPEG ====="
+          echo "===== SCREEN TEST ====="
+          import -display :99 -window root /tmp/stream-screen.png
+          file /tmp/stream-screen.png
+
+          echo "===== START FFMPEG ====="
 
           ffmpeg \
             -draw_mouse 0 \
@@ -96,3 +96,12 @@ jobs:
             -ar 44100 \
             -f flv \
             "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+
+      - name: Upload diagnostic screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-diagnostic
+          path: |
+            /tmp/stream-screen.png
+            http.log
