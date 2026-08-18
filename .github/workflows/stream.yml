@@ -55,11 +55,7 @@ jobs:
 
           # Matikan Google Translate melalui Chromium policy
           sudo mkdir -p /etc/chromium/policies/managed
-          sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null <<'EOF'
-{
-  "TranslateEnabled": false
-}
-EOF
+          printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null
 
           sleep 2
 
