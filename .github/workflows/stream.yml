@@ -28,7 +28,7 @@ jobs:
             chromium-browser \
             imagemagick \
             mesa-utils \
-            libgl1-mesa-dri
+            libgl1-mesa-dri \
             python3-pip
 
       - name: Install Python dependencies
