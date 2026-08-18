@@ -23,6 +23,8 @@ jobs:
           sudo apt-get install -y \
             ffmpeg \
             xvfb \
+            pulseaudio \
+            pulseaudio-utils \
             chromium-browser \
             imagemagick \
             mesa-utils \
@@ -46,6 +48,21 @@ jobs:
           export DISPLAY=:99
           sleep 3
 
+          echo "===== START PULSEAUDIO ====="
+          pulseaudio --start --system=false --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=stream_sink sink_properties=device.description=StreamSink
+          export PULSE_SINK=stream_sink
+
+          # Matikan Google Translate melalui Chromium policy
+          sudo mkdir -p /etc/chromium/policies/managed
+          sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null <<'EOF'
+{
+  "TranslateEnabled": false
+}
+EOF
+
+          sleep 2
+
           echo "===== START HTTP SERVER ====="
           python3 -m http.server 8000 > http.log 2>&1 &
           sleep 3
@@ -64,6 +81,9 @@ jobs:
             --no-first-run \
             --autoplay-policy=no-user-gesture-required \
             --disable-features=Translate,TranslateUI \
+            --disable-translate \
+            --lang=id-ID \
+            --user-data-dir=/tmp/chromium-profile \
             http://127.0.0.1:8000/index.html &
 
           sleep 10
@@ -87,8 +107,8 @@ jobs:
               -framerate 25 \
               -i :99.0 \
               -thread_queue_size 1024 \
-              -f lavfi \
-              -i anullsrc=channel_layout=stereo:sample_rate=44100 \
+              -f pulse \
+              -i stream_sink.monitor \
               -c:v libx264 \
               -preset ultrafast \
               -tune zerolatency \
