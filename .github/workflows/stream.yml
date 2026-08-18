@@ -81,7 +81,6 @@ jobs:
           params = urllib.parse.urlencode({
               "part": "id,snippet,status",
               "broadcastStatus": "active",
-              "mine": "true",
               "maxResults": "10",
           })
 
