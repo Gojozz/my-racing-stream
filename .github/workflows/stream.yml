@@ -133,12 +133,16 @@ jobs:
         run: |
           echo "===== START CHAT BOT ====="
           echo "Live ID berhasil dideteksi."
-          python3 bot.py > bot.log 2>&1 &
+          python3 -u bot.py > bot.log 2>bot-error.log &
 
           sleep 3
 
           echo "===== BOT PROCESS ====="
           ps aux | grep '[p]ython3 bot.py' || true
+          echo "===== BOT LOG ====="
+          cat bot.log 2>/dev/null || true
+          echo "===== BOT ERROR ====="
+          cat bot-error.log 2>/dev/null || true
 
       - name: Check dependencies
         run: |
