@@ -123,8 +123,7 @@ jobs:
                   )
 
           with open(os.environ["GITHUB_ENV"], "a") as f:
-              f.write("YOUTUBE_LIVE_ID=" + live_id + "
-")
+              f.write("YOUTUBE_LIVE_ID=" + live_id + "\n")
 
           print("YOUTUBE_LIVE_ID berhasil diset.")
           PY2
