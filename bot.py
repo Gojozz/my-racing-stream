@@ -29,7 +29,6 @@ def find_live_video_id():
 
     try:
         youtube = build("youtube", "v3", developerKey=API_KEY)
-
         request = youtube.search().list(
             part="snippet",
             channelId=CHANNEL_ID,
@@ -38,7 +37,6 @@ def find_live_video_id():
             maxResults=1
         )
         response = request.execute()
-
         items = response.get("items", [])
         if not items:
             print("[AUTO] Tidak ditemukan live stream aktif di channel ini.")
@@ -58,7 +56,6 @@ def find_live_video_id():
 def load_state():
     if not STATE_FILE.exists():
         return {"active": [], "queue": [], "lastUpdate": 0}
-
     try:
         with STATE_FILE.open("r", encoding="utf-8") as f:
             state = json.load(f)
@@ -145,7 +142,6 @@ class RaceResultHandler(BaseHTTPRequestHandler):
             self.send_cors_headers()
             self.end_headers()
             return
-
         try:
             length = int(self.headers.get("Content-Length", "0"))
             body = self.rfile.read(length)
@@ -178,7 +174,6 @@ class RaceResultHandler(BaseHTTPRequestHandler):
                 self.send_cors_headers()
                 self.end_headers()
                 self.wfile.write(b"player not found")
-
         except Exception as e:
             print(f"[ROTATION ERROR] {e}")
             self.send_response(500)
@@ -212,6 +207,35 @@ def add_player(state, user):
     return "queue"
 
 
+def create_chat_with_retry(video_id, max_retries=12, delay=8):
+    """
+    Coba buat koneksi pytchat berkali-kali.
+    Live baru sering belum siap dibaca chat-nya.
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            print(f"[CHAT] Mencoba koneksi chat... ({attempt}/{max_retries})")
+            chat = pytchat.create(video_id=video_id)
+            # Cek cepat apakah chat hidup
+            if chat.is_alive():
+                print(f"[CHAT] Koneksi berhasil pada percobaan {attempt}")
+                return chat
+            else:
+                print(f"[CHAT] Chat object dibuat tapi belum alive, coba lagi...")
+                try:
+                    chat.terminate()
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[CHAT] Gagal percobaan {attempt}: {e}")
+
+        if attempt < max_retries:
+            print(f"[CHAT] Tunggu {delay} detik sebelum coba lagi...")
+            time.sleep(delay)
+
+    return None
+
+
 def start_bot():
     global VIDEO_ID
 
@@ -219,12 +243,13 @@ def start_bot():
     print(" CHAT JOIN SYSTEM ONLINE")
     print("====================================")
 
+    # 1. Dapatkan Video ID
     if VIDEO_ID:
         print(f"[MANUAL] Menggunakan YOUTUBE_LIVE_ID: {VIDEO_ID}")
     else:
         print("[AUTO] YOUTUBE_LIVE_ID kosong, mencari live aktif...")
-        for attempt in range(1, 13):
-            print(f"[AUTO] Percobaan {attempt}/12 mencari live...")
+        for attempt in range(1, 16):
+            print(f"[AUTO] Percobaan {attempt}/15 mencari live...")
             found_id = find_live_video_id()
             if found_id:
                 VIDEO_ID = found_id
@@ -233,33 +258,48 @@ def start_bot():
 
         if not VIDEO_ID:
             print("ERROR: Tidak berhasil menemukan live stream aktif.")
-            print("Pastikan:")
-            print("  1. Stream sudah benar-benar LIVE di YouTube")
-            print("  2. YOUTUBE_API_KEY dan YOUTUBE_CHANNEL_ID sudah benar")
+            print("Pastikan stream sudah LIVE dan secret API sudah benar.")
             return
 
     print(f"[BOT] Live ID yang dipakai: {VIDEO_ID}")
     print(f"[BOT] Max aktif: {MAX_PLAYERS}")
     print("====================================")
 
+    # 2. Inisialisasi state
     state = load_state()
     save_state(state)
 
+    # 3. Server rotasi
     threading.Thread(target=start_rotation_server, daemon=True).start()
 
-    chat = pytchat.create(video_id=VIDEO_ID)
-    print(f"Bot mendengarkan live chat ID: {VIDEO_ID}")
+    # 4. Koneksi chat dengan retry
+    print("[CHAT] Menunggu chat siap (live baru sering butuh waktu)...")
+    time.sleep(10)  # jeda awal setelah live terdeteksi
 
+    chat = create_chat_with_retry(VIDEO_ID, max_retries=12, delay=8)
+
+    if chat is None:
+        print("ERROR: Gagal konek ke live chat setelah banyak percobaan.")
+        print("Kemungkinan:")
+        print("  - Live chat belum aktif / dimatikan")
+        print("  - Video ID tidak valid untuk pytchat")
+        print("  - Masalah sementara dari YouTube")
+        return
+
+    print(f"Bot mendengarkan live chat ID: {VIDEO_ID}")
+    print("Siap menerima perintah: join")
+
+    # 5. Loop baca chat
     while True:
         try:
             if not chat.is_alive():
                 print("[CHAT] Koneksi chat berhenti. Mencoba reconnect...")
                 time.sleep(5)
-                try:
-                    chat = pytchat.create(video_id=VIDEO_ID)
-                    print("[CHAT] Reconnect berhasil.")
-                except Exception as reconnect_error:
-                    print(f"[CHAT RECONNECT ERROR] {reconnect_error}")
+                chat = create_chat_with_retry(VIDEO_ID, max_retries=5, delay=5)
+                if chat is None:
+                    print("[CHAT] Reconnect gagal total. Bot berhenti.")
+                    break
+                print("[CHAT] Reconnect berhasil.")
                 continue
 
             for c in chat.get().sync_items():
