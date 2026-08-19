@@ -3,8 +3,6 @@ name: YouTube Live Stream
 on:
   workflow_dispatch:
 
-# MENCEGAH DUPLIKASI STREAM:
-# Batal workflow lama secara otomatis jika ada workflow baru yang dipicu
 concurrency:
   group: youtube-live-stream
   cancel-in-progress: true
@@ -38,13 +36,12 @@ jobs:
       - name: Start Chat Bot
         env:
           YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
         run: |
           echo "===== START CHAT BOT ====="
-          echo "Live ID berhasil dideteksi."
           python3 -u bot.py > bot.log 2>bot-error.log &
-
           sleep 3
-
           echo "===== BOT PROCESS ====="
           ps aux | grep '[p]ython3 bot.py' || true
           echo "===== BOT LOG ====="
@@ -75,7 +72,6 @@ jobs:
           pactl load-module module-null-sink sink_name=stream_sink sink_properties=device.description=StreamSink
           export PULSE_SINK=stream_sink
 
-          # Matikan Google Translate melalui Chromium policy
           sudo mkdir -p /etc/chromium/policies/managed
           sudo mkdir -p /etc/chromium-browser/policies/managed
           printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null
@@ -148,7 +144,7 @@ jobs:
             sleep 3
           done
 
-      - name: Upload diagnostic screenshot
+      - name: Upload diagnostic
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -156,3 +152,6 @@ jobs:
           path: |
             /tmp/stream-screen.png
             http.log
+            bot.log
+            bot-error.log
+            chat_state.json
