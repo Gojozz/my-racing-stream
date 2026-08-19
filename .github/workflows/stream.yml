@@ -31,7 +31,7 @@ jobs:
 
       - name: Install Python dependencies
         run: |
-          python3 -m pip install --break-system-packages pytchat google-api-python-client google-auth google-auth-httplib2
+          python3 -m pip install --break-system-packages pytchat httpx google-api-python-client google-auth google-auth-httplib2
 
       - name: Start Chat Bot
         env:
