@@ -223,14 +223,19 @@ else:
 
 
 LUNA_SYSTEM_PROMPT = """
-Kamu adalah LUNA, host live racing yang ceria, spontan, ramah, dan lucu.
-Selalu jawab dalam bahasa Indonesia yang natural dan santai seperti host live stream.
-Jangan terdengar seperti robot atau bahasa resmi.
-Boleh memakai ungkapan ringan seperti "gas", "waduh", "gila", "mantap", atau "buset" jika cocok.
-Tetap family friendly dan jangan menghina penonton.
-Jawaban harus singkat, maksimal satu kalimat dan maksimal 14 kata.
-Jangan pernah menyebut bahwa kamu AI, bot, model, atau sistem.
+Kamu LUNA, komentator balap live yang cerewet, kocak, dan asal ngomong.
+Bahasa: Indonesia gaul, tidak baku, kayak temen nonton balap bareng.
+Boleh pakai: woy, gas, gila, buset, mantap, waduh, anjay (jangan kasar berlebih), auto, kepleset, ngebut.
+Gaya: komentator overreact, bikin seru, jangan kaku, jangan formal.
+Aturan:
+- Selalu bahasa Indonesia santai
+- Maksimal 1 kalimat pendek (max 16 kata)
+- Jangan bilang kamu AI/bot/model
+- Jangan menghina penonton
+- Kalau balas chat: sebut nama singkat, langsung lucu
+- Kalau komentar balap: seolah lihat mobil ngebut di lintasan
 """
+
 
 
 
@@ -251,11 +256,11 @@ tts_lock = threading.Lock()
 
 last_tts_time = 0.0
 
-CHAT_COOLDOWN = 8.0
+CHAT_COOLDOWN = 5.0
 
 last_chat_response = {}
 
-ENGAGEMENT_INTERVAL = 600
+ENGAGEMENT_INTERVAL = 90
 
 last_engagement_time = time.time() - 300
 
@@ -460,16 +465,16 @@ def ask_luna(user_name, message, context="chat"):
         if context == "chat":
 
             prompt = (
-                f"Penonton bernama {user_name} berkata: "
-                f"{message}\n"
-                "Balas penonton tersebut dengan gaya LUNA."
+                f"Penonton {user_name} bilang: {message}\n"
+                "Balas singkat ala komentator balap yang kocak. "
+                "Sebut namanya, boleh nyambung soal balapan."
             )
 
         elif context == "commentary":
 
             prompt = (
-                "Berikan komentar singkat tentang balapan yang "
-                "sedang berlangsung. Buat seru dan kocak."
+                "Kasih 1 kalimat komentar balap yang overreact dan kocak, "
+                "seolah mobil lagi ngebut di sirkuit."
             )
 
         else:
@@ -1361,6 +1366,10 @@ def start_bot():
                             f"{[p['user'] for p in state['active']]}"
                         )
 
+                        speak(
+                            f"Woy {user} masuk lintasan, gas pol!"
+                        )
+
                     elif result == "queue":
 
                         position = len(
@@ -1373,6 +1382,10 @@ def start_bot():
                         )
 
                         save_state(state)
+
+                        speak(
+                            f"{user} antri dulu ya, bentar lagi gas!"
+                        )
 
                     else:
 
@@ -1422,7 +1435,7 @@ def start_bot():
                             should_answer = (
                                 direct
                                 or
-                                random.random() < 0.22
+                                random.random() < 0.55
                             )
 
                             if should_answer:
