@@ -260,9 +260,9 @@ CHAT_COOLDOWN = 5.0
 
 last_chat_response = {}
 
-ENGAGEMENT_INTERVAL = 120
+ENGAGEMENT_INTERVAL = 90
 
-last_engagement_time = time.time() - 300
+last_engagement_time = time.time() - 10000
 
 engagement_index = 0
 
