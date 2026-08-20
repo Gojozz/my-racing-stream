@@ -224,6 +224,40 @@
         }
     }
 
+
+    /* =========================
+       COUNTDOWN
+    ========================= */
+    #countdown-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        background: rgba(0,0,0,0.25);
+    }
+
+    #countdown-text {
+        font-size: clamp(80px, 18vw, 160px);
+        font-weight: 1000;
+        font-style: italic;
+        color: #fff;
+        text-shadow:
+            0 4px 0 #d40000,
+            0 0 30px rgba(255,40,40,0.9),
+            0 0 60px rgba(255,255,255,0.7);
+        letter-spacing: 6px;
+        animation: countdownPop 0.35s ease-out;
+    }
+
+    @keyframes countdownPop {
+        0% { transform: scale(0.4); opacity: 0; }
+        60% { transform: scale(1.15); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
     /* =========================
        FINISH
     ========================= */
@@ -338,6 +372,11 @@
 <div id="finish-banner">
     FINISH!
 </div>
+
+<div id="countdown-overlay">
+    <div id="countdown-text">3</div>
+</div>
+
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -1946,12 +1985,81 @@ let lastFrameTime = performance.now();
 // =========================================================
 // SPECTATOR CAMERA STATE
 // =========================================================
+// 0=P1  1=P2  2=P3  3=group  4=wide  5=top  6=rear pack
 let spectatorMode = 0;
 let spectatorTimer = 5;
 let spectatorBlend = 0;
 let spectatorLookX = 0;
 let spectatorLookY = 0;
 let spectatorLookZ = 0;
+
+// =========================================================
+// COUNTDOWN + RACE START
+// =========================================================
+let raceStarted = false;
+let countdownActive = false;
+let countdownValue = 3;
+let countdownTimer = 0;
+
+const countdownOverlay = document.getElementById('countdown-overlay');
+const countdownText = document.getElementById('countdown-text');
+
+function startCountdown() {
+    raceStarted = false;
+    countdownActive = true;
+    countdownValue = 3;
+    countdownTimer = 1.0;
+
+    if (countdownOverlay) {
+        countdownOverlay.style.display = 'flex';
+    }
+
+    if (countdownText) {
+        countdownText.textContent = '3';
+        countdownText.style.animation = 'none';
+        void countdownText.offsetWidth;
+        countdownText.style.animation = 'countdownPop 0.35s ease-out';
+    }
+}
+
+function updateCountdown(deltaSeconds) {
+    if (!countdownActive) return;
+
+    countdownTimer -= deltaSeconds;
+
+    if (countdownTimer > 0) return;
+
+    countdownValue -= 1;
+
+    if (countdownValue >= 1) {
+        if (countdownText) {
+            countdownText.textContent = String(countdownValue);
+            countdownText.style.animation = 'none';
+            void countdownText.offsetWidth;
+            countdownText.style.animation = 'countdownPop 0.35s ease-out';
+        }
+
+        countdownTimer = 1.0;
+
+    } else if (countdownValue === 0) {
+        if (countdownText) {
+            countdownText.textContent = 'GO!';
+            countdownText.style.animation = 'none';
+            void countdownText.offsetWidth;
+            countdownText.style.animation = 'countdownPop 0.35s ease-out';
+        }
+
+        countdownTimer = 0.8;
+
+    } else {
+        countdownActive = false;
+        raceStarted = true;
+
+        if (countdownOverlay) {
+            countdownOverlay.style.display = 'none';
+        }
+    }
+}
 
 // =========================================================
 // FINISH PHASE
@@ -1979,8 +2087,13 @@ function animate() {
     lastFrameTime = now;
 
     const frameFactor =
+
         deltaSeconds * 60;
 
+
+    // Update countdown setiap frame
+
+    updateCountdown(deltaSeconds);
     if (!isRaceFinished) {
 
         cars.forEach((car, index) => {
@@ -2068,7 +2181,7 @@ function animate() {
                 car.aiSpeed;
 
             const distanceThisFrame =
-                currentSpeed * frameFactor;
+                raceStarted ? (currentSpeed * frameFactor) : 0;
 
             car.progress +=
                 distanceThisFrame;
@@ -2161,6 +2274,10 @@ function animate() {
                             spectatorMode = 0;
                             spectatorTimer =
                                 4 + Math.random() * 3;
+
+                            // Siapkan race berikutnya
+                            startCountdown();
+                            prepareNextRaceRotation();
 
                         }, 5000);
                     }
@@ -2503,7 +2620,8 @@ else if (spectatorMode === 4) {
     renderer.render(scene, camera);
 }
 
-// Mulai animasi
+// Mulai countdown lalu animasi
+startCountdown();
 animate();
 
 // Responsif terhadap perubahan ukuran layar
