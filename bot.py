@@ -1,3 +1,42 @@
+
+def get_live_video_id(channel_id=None):
+    env_id = os.environ.get("YOUTUBE_LIVE_ID", "").strip()
+    if env_id:
+        print(f"[AUTO LIVE] Menggunakan YOUTUBE_LIVE_ID dari Secret: {env_id}")
+        return env_id
+
+    cid = channel_id or os.environ.get("YOUTUBE_CHANNEL_ID", "").strip()
+    if not cid:
+        print("[AUTO LIVE ERROR] YOUTUBE_CHANNEL_ID tidak ditemukan.")
+        return None
+
+    url = f"https://www.youtube.com/channel/{cid}/live"
+    print(f"[AUTO LIVE] Mencari Live ID otomatis untuk Channel: {cid}...")
+
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9"
+        }
+        with httpx.Client(follow_redirects=True, timeout=15.0, headers=headers) as client:
+            resp = client.get(url)
+            match = re.search(r"v=([a-zA-Z0-9_-]{11})", str(resp.url))
+            if match:
+                video_id = match.group(1)
+                print(f"[AUTO LIVE SUCCESS] Live ID ditemukan dari redirect: {video_id}")
+                return video_id
+
+            match_html = re.search(r'"videoId":"([a-zA-Z0-9_-]{11})"', resp.text)
+            if match_html:
+                video_id = match_html.group(1)
+                print(f"[AUTO LIVE SUCCESS] Live ID ditemukan dari HTML: {video_id}")
+                return video_id
+    except Exception as e:
+        print(f"[AUTO LIVE ERROR] Gagal deteksi otomatis: {e}")
+
+    return None
+
+
 import pytchat
 import time
 import os
@@ -117,7 +156,8 @@ print("[PATCH] pytchat get_channelid sudah di-patch (oEmbed)")
 # KONFIGURASI
 # =========================================================
 
-VIDEO_ID = os.environ.get("YOUTUBE_LIVE_ID", "").strip()
+CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "").strip()
+VIDEO_ID = get_live_video_id(CHANNEL_ID)
 API_KEY = os.environ.get("YOUTUBE_API_KEY", "").strip()
 CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "").strip()
 
