@@ -1274,12 +1274,13 @@ def start_bot():
 
     print(
         "Siap menerima perintah: join"
-        speak("Luna siap. Ketik join untuk ikut balapan.")
     )
 
     print(
         "LUNA siap membalas chat."
     )
+
+    speak("Luna siap. Ketik join untuk ikut balapan.")
 
     print("====================================")
 
