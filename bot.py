@@ -184,7 +184,7 @@ print("[PATCH] pytchat get_channelid sudah di-patch (oEmbed)")
 # =========================================================
 
 CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "").strip()
-VIDEO_ID = get_live_video_id(CHANNEL_ID)
+VIDEO_ID = ""  # deteksi di start_bot() setelah stream sempat live
 API_KEY = os.environ.get("YOUTUBE_API_KEY", "").strip()
 CHANNEL_ID = os.environ.get("YOUTUBE_CHANNEL_ID", "").strip()
 
