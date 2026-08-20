@@ -1,4 +1,31 @@
 
+def fetch_live_id_via_https(channel_id):
+    if not channel_id:
+        print("[AUTO LIVE ERROR] CHANNEL_ID tidak ditemukan!")
+        return None
+    url = f"https://www.youtube.com/channel/{channel_id}/live"
+    print(f"[AUTO LIVE] Memeriksa stream live di: {url}")
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9"
+        }
+        with httpx.Client(follow_redirects=True, timeout=15.0, headers=headers) as client:
+            resp = client.get(url)
+            m = re.search(r"v=([a-zA-Z0-9_-]{11})", str(resp.url))
+            if m:
+                print(f"[AUTO LIVE SUCCESS] Video ID ditemukan: {m.group(1)}")
+                return m.group(1)
+            m_html = re.search(r'"videoId":"([a-zA-Z0-9_-]{11})"', resp.text)
+            if m_html:
+                print(f"[AUTO LIVE SUCCESS] Video ID ditemukan (HTML): {m_html.group(1)}")
+                return m_html.group(1)
+    except Exception as e:
+        print(f"[AUTO LIVE ERROR] Gagal request HTTP: {e}")
+    return None
+
+
+
 def get_live_video_id(channel_id=None):
     env_id = os.environ.get("YOUTUBE_LIVE_ID", "").strip()
     if env_id:
