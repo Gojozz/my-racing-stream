@@ -293,6 +293,11 @@ def run_piper(text):
     if not text:
         return False
 
+    model_path = Path(PIPER_MODEL)
+    if not model_path.exists():
+        print(f"[TTS ERROR] Model tidak ditemukan: {model_path}")
+        return False
+
     wav_path = Path(
         tempfile.mktemp(
             prefix="luna_",
@@ -301,70 +306,83 @@ def run_piper(text):
     )
 
     try:
-
         print(f"[TTS] {text}")
+        print(f"[TTS] model={model_path}")
+        print(f"[TTS] PULSE_SINK={os.environ.get('PULSE_SINK', '')}")
 
-        with wav_path.open("wb") as out:
-
-            process = subprocess.run(
-                [
-                    PIPER_BIN,
-                    "--model",
-                    PIPER_MODEL,
-                    "--output_file",
-                    str(wav_path)
-                ],
-                input=(text + "\n").encode("utf-8"),
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                timeout=30
-            )
-
-        if process.returncode != 0:
-
-            print(
-                "[TTS ERROR]",
-                process.stderr.decode(
-                    "utf-8",
-                    errors="replace"
-                )[-1000:]
-            )
-
-            return False
-
-        # paplay akan menggunakan PulseAudio sink default.
-        result = subprocess.run(
+        process = subprocess.run(
             [
-                "paplay",
+                PIPER_BIN,
+                "--model",
+                str(model_path),
+                "--output_file",
                 str(wav_path)
             ],
-            stdout=subprocess.DEVNULL,
+            input=(text + "\n").encode("utf-8"),
+            stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            timeout=45
+            timeout=30
+        )
+
+        if process.returncode != 0:
+            print(
+                "[TTS ERROR]",
+                process.stderr.decode("utf-8", errors="replace")[-1000:]
+            )
+            return False
+
+        if not wav_path.exists() or wav_path.stat().st_size < 100:
+            print("[TTS ERROR] File WAV kosong / tidak dibuat")
+            return False
+
+        print(f"[TTS] WAV size={wav_path.stat().st_size} bytes")
+
+        # Pastikan main ke stream_sink
+        env = os.environ.copy()
+        env["PULSE_SINK"] = env.get("PULSE_SINK", "stream_sink")
+
+        # Set default sink (abaikan error jika sudah)
+        subprocess.run(
+            ["pactl", "set-default-sink", env["PULSE_SINK"]],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+
+        result = subprocess.run(
+            ["paplay", str(wav_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=45,
+            env=env
         )
 
         if result.returncode != 0:
+            err = result.stderr.decode("utf-8", errors="replace")[-1000:]
+            print("[PAPLAY ERROR]", err)
 
-            print(
-                "[PAPLAY ERROR]",
-                result.stderr.decode(
-                    "utf-8",
-                    errors="replace"
-                )[-1000:]
+            # Fallback: coba device eksplisit
+            result2 = subprocess.run(
+                ["paplay", f"--device={env['PULSE_SINK']}", str(wav_path)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=45,
+                env=env
             )
+            if result2.returncode != 0:
+                print(
+                    "[PAPLAY ERROR2]",
+                    result2.stderr.decode("utf-8", errors="replace")[-1000:]
+                )
+                return False
 
-            return False
-
+        print("[TTS] Playback OK")
         return True
 
     except Exception as e:
-
         print(f"[TTS ERROR] {e}")
-
         return False
 
     finally:
-
         try:
             wav_path.unlink(missing_ok=True)
         except Exception:
@@ -1256,6 +1274,7 @@ def start_bot():
 
     print(
         "Siap menerima perintah: join"
+        speak("Luna siap. Ketik join untuk ikut balapan.")
     )
 
     print(
