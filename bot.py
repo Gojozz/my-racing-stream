@@ -260,11 +260,32 @@ CHAT_COOLDOWN = 5.0
 
 last_chat_response = {}
 
-ENGAGEMENT_INTERVAL = 90
+ENGAGEMENT_INTERVAL = 120
 
 last_engagement_time = time.time() - 300
 
 engagement_index = 0
+
+
+ENGAGE_PROMOS = [
+    "Woy jangan lupa like-nya, biar balapannya nambah gila!",
+    "Klik subscribe dong, biar kagak ketinggalan race berikutnya!",
+    "Komen di chat, LUNA baca kok, jangan diem aja!",
+    "Like, subscribe, trus ketik join kalau berani turun lintasan!",
+    "Yang baru datang: like dulu, subscribe, baru nonton sambil ngegas!",
+    "Komen 'gas' di chat, biar suasana langsung panas!",
+    "Subscribe-nya jangan pelit, race ini butuh dukungan kalian!",
+    "Pencet like biar algoritma gak tidur, balapan tetap ramai!",
+]
+
+JOIN_PROMOS = [
+    "Mau turun ke lintasan? Ketik join di chat, nama kalian jadi pembalap!",
+    "Berani balapan? Ketik join, nanti nama kalian ikut ngegas!",
+    "Jangan cuma nonton! Ketik join dan siap-siap jadi pembalap!",
+    "Pengen balapan? Ketik join di chat, siapa tahu mobil kalian paling brutal!",
+    "Ketik join kalau berani! Nama kalian bisa muncul di lintasan!",
+]
+
 
 
 def clean_tts_text(text):
@@ -435,6 +456,15 @@ threading.Thread(
 ).start()
 
 
+
+def pick_engagement_line():
+    global engagement_index
+    engagement_index += 1
+    # 2x ajakan sosmed, 1x ajakan join
+    if engagement_index % 3 == 0:
+        return random.choice(JOIN_PROMOS)
+    return random.choice(ENGAGE_PROMOS)
+
 def speak(text):
 
     text = clean_tts_text(text)
@@ -530,19 +560,7 @@ def ask_luna(user_name, message, context="chat"):
 # ENGAGEMENT
 # =========================================================
 
-JOIN_PROMOS = [
 
-    "Mau turun ke lintasan? Ketik join di chat, nama kalian bisa jadi pembalap!",
-
-    "Berani balapan? Ketik join, nanti nama kalian ikut turun ke lintasan!",
-
-    "Jangan cuma nonton! Ketik join dan siap-siap nama kalian jadi pembalap!",
-
-    "Pengen balapan? Ketik join di chat, siapa tahu mobil kalian paling brutal!",
-
-    "Ketik join kalau berani! Nama kalian bisa muncul sebagai pembalap berikutnya!"
-
-]
 
 
 LIKE_PROMOS = [
@@ -584,19 +602,8 @@ def engagement_loop():
             # 0 = like/subscribe/share
             # 1 = join
 
-            if engagement_index % 2 == 0:
-
-                text = random.choice(
-                    LIKE_PROMOS
-                )
-
-            else:
-
-                text = random.choice(
-                    JOIN_PROMOS
-                )
-
-            engagement_index += 1
+            text = pick_engagement_line()
+            # engagement_index di dalam helper
 
             print(
                 f"[ENGAGEMENT] {text}"
