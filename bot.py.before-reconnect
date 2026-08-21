@@ -1,0 +1,313 @@
+import pytchat
+import time
+import os
+import json
+import tempfile
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+VIDEO_ID = os.environ.get("YOUTUBE_LIVE_ID", "")
+STATE_FILE = Path("chat_state.json")
+MAX_PLAYERS = 5
+ROTATION_PORT = 8765
+last_processed_race = None
+
+
+def load_state():
+    if not STATE_FILE.exists():
+        return {
+            "active": [],
+            "queue": [],
+            "lastUpdate": 0
+        }
+
+    try:
+        with STATE_FILE.open("r", encoding="utf-8") as f:
+            state = json.load(f)
+
+        state.setdefault("active", [])
+        state.setdefault("queue", [])
+        state.setdefault("lastUpdate", 0)
+
+        return state
+
+    except Exception as e:
+        print(f"[STATE ERROR] {e}")
+
+        return {
+            "active": [],
+            "queue": [],
+            "lastUpdate": 0
+        }
+
+
+def save_state(state):
+    state["lastUpdate"] = time.time()
+
+    # Tulis ke file sementara lalu replace.
+    # Game tidak akan membaca file setengah jadi.
+    fd, temp_path = tempfile.mkstemp(
+        prefix="chat_state_",
+        suffix=".tmp",
+        dir="."
+    )
+
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(
+                state,
+                f,
+                ensure_ascii=False,
+                indent=2
+            )
+            f.flush()
+            os.fsync(f.fileno())
+
+        os.replace(temp_path, STATE_FILE)
+
+    except Exception:
+        try:
+            os.unlink(temp_path)
+        except Exception:
+            pass
+
+        raise
+
+
+def normalize_user(user):
+    return str(user).strip()
+
+
+def rotate_after_race(eliminated_name):
+    global last_processed_race
+
+    state = load_state()
+
+    # Cari pemain berdasarkan nama yang benar-benar keluar.
+    eliminated_index = None
+
+    for i, player in enumerate(state["active"]):
+        name = str(player.get("name", player.get("user", "")))
+        user = str(player.get("user", ""))
+
+        if name.lower() == str(eliminated_name).lower() or            user.lower() == str(eliminated_name).lower():
+            eliminated_index = i
+            break
+
+    if eliminated_index is None:
+        print(f"[ROTATE] Pemain tidak ditemukan: {eliminated_name}")
+        return False
+
+    eliminated = state["active"].pop(eliminated_index)
+
+    incoming = None
+
+    if state["queue"] and len(state["active"]) < MAX_PLAYERS:
+        incoming = state["queue"].pop(0)
+        state["active"].append(incoming)
+
+    save_state(state)
+
+    print("====================================")
+    print(f"[ROTATE] KELUAR : {eliminated.get('name', eliminated.get('user'))}")
+
+    if incoming:
+        print(f"[ROTATE] MASUK  : {incoming.get('name', incoming.get('user'))}")
+    else:
+        print("[ROTATE] MASUK  : TIDAK ADA (ANTREAN KOSONG)")
+
+    print(
+        f"[ROTATE] AKTIF  : "
+        f"{[p.get('name', p.get('user')) for p in state['active']]}"
+    )
+
+    print(
+        f"[ROTATE] QUEUE  : "
+        f"{[p.get('name', p.get('user')) for p in state['queue']]}"
+    )
+
+    print("====================================")
+
+    return True
+
+
+class RaceResultHandler(BaseHTTPRequestHandler):
+
+    def send_cors_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_cors_headers()
+        self.end_headers()
+
+    def do_POST(self):
+        if self.path != "/race-result":
+            self.send_response(404)
+            self.send_cors_headers()
+            self.end_headers()
+            return
+
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            body = self.rfile.read(length)
+            data = json.loads(body.decode("utf-8"))
+
+            race_id = str(data.get("raceId", "")).strip()
+            eliminated = str(data.get("eliminated", "")).strip()
+
+            if not race_id or not eliminated:
+                self.send_response(400)
+                self.send_cors_headers()
+                self.end_headers()
+                return
+
+            global last_processed_race
+
+            if race_id == last_processed_race:
+                self.send_response(200)
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(b"already processed")
+                return
+
+            if rotate_after_race(eliminated):
+                last_processed_race = race_id
+
+                self.send_response(200)
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(b"rotation ok")
+
+            else:
+                self.send_response(404)
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(b"player not found")
+
+        except Exception as e:
+            print(f"[ROTATION ERROR] {e}")
+
+            self.send_response(500)
+            self.send_cors_headers()
+            self.end_headers()
+    def log_message(self, format, *args):
+        return
+
+
+def start_rotation_server():
+    server = ThreadingHTTPServer(("127.0.0.1", ROTATION_PORT), RaceResultHandler)
+
+    print(f"[ROTATION SERVER] http://127.0.0.1:{ROTATION_PORT}")
+
+    server.serve_forever()
+
+
+
+def already_joined(state, user):
+    active_names = {
+        p["user"].lower()
+        for p in state["active"]
+    }
+
+    queue_names = {
+        p["user"].lower()
+        for p in state["queue"]
+    }
+
+    return (
+        user.lower() in active_names
+        or user.lower() in queue_names
+    )
+
+
+def add_player(state, user):
+    if already_joined(state, user):
+        return "already"
+
+    player = {
+        "user": user,
+        "name": user,
+        "joinedAt": time.time()
+    }
+
+    if len(state["active"]) < MAX_PLAYERS:
+        state["active"].append(player)
+        return "active"
+
+    state["queue"].append(player)
+    return "queue"
+
+
+def start_bot():
+    if not VIDEO_ID:
+        print("ERROR: YOUTUBE_LIVE_ID belum diisi.")
+        return
+
+    print("====================================")
+    print(" CHAT JOIN SYSTEM ONLINE")
+    print(f" Live ID : {VIDEO_ID}")
+    print(f" Max aktif : {MAX_PLAYERS}")
+    print("====================================")
+
+    state = load_state()
+    save_state(state)
+
+    # Server rotasi berjalan di thread terpisah.
+    threading.Thread(
+        target=start_rotation_server,
+        daemon=True
+    ).start()
+
+    chat = pytchat.create(video_id=VIDEO_ID)
+
+    print(f"Bot mendengarkan live chat ID: {VIDEO_ID}")
+
+    while chat.is_alive():
+
+        try:
+            for c in chat.get().sync_items():
+
+                user = normalize_user(c.author.name)
+                msg = c.message.lower().strip()
+
+                if msg == "join" or msg.startswith("join "):
+
+                    result = add_player(state, user)
+
+                    if result == "active":
+                        print(
+                            f"[JOIN] {user} -> PEMBALAP AKTIF "
+                            f"({len(state['active'])}/{MAX_PLAYERS})"
+                        )
+
+                        save_state(state)
+
+                    elif result == "queue":
+                        position = len(state["queue"])
+
+                        print(
+                            f"[QUEUE] {user} -> "
+                            f"ANTREAN #{position}"
+                        )
+
+                        save_state(state)
+
+                    else:
+                        print(
+                            f"[IGNORE] {user} sudah terdaftar"
+                        )
+
+        except Exception as e:
+            print(f"[CHAT ERROR] {e}")
+
+            time.sleep(2)
+
+        time.sleep(0.2)
+
+
+if __name__ == "__main__":
+    start_bot()

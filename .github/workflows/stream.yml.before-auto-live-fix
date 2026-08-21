@@ -1,0 +1,248 @@
+name: YouTube Live Stream
+
+on:
+  workflow_dispatch:
+
+# MENCEGAH DUPLIKASI STREAM:
+# Batal workflow lama secara otomatis jika ada workflow baru yang dipicu
+concurrency:
+  group: youtube-live-stream
+  cancel-in-progress: true
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ffmpeg \
+            xvfb \
+            pulseaudio \
+            pulseaudio-utils \
+            chromium-browser \
+            imagemagick \
+            mesa-utils \
+            libgl1-mesa-dri
+            python3-pip
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --break-system-packages pytchat google-api-python-client google-auth google-auth-httplib2
+
+      - name: Detect active YouTube Live
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          FALLBACK_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
+        run: |
+          python3 - <<'PY2'
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          client_id = os.environ["YOUTUBE_CLIENT_ID"]
+          client_secret = os.environ["YOUTUBE_CLIENT_SECRET"]
+          refresh_token = os.environ["YOUTUBE_REFRESH_TOKEN"]
+          fallback = os.environ.get("FALLBACK_LIVE_ID", "").strip()
+
+          print("===== DETECT ACTIVE YOUTUBE LIVE =====")
+
+          # Tukar refresh token menjadi access token.
+          data = urllib.parse.urlencode({
+              "client_id": client_id,
+              "client_secret": client_secret,
+              "refresh_token": refresh_token,
+              "grant_type": "refresh_token",
+          }).encode()
+
+          req = urllib.request.Request(
+              "https://oauth2.googleapis.com/token",
+              data=data,
+              headers={
+                  "Content-Type":
+                  "application/x-www-form-urlencoded"
+              },
+          )
+
+          with urllib.request.urlopen(req) as r:
+              token = json.loads(r.read().decode())
+
+          access_token = token["access_token"]
+
+          # Cari broadcast yang sedang aktif.
+          params = urllib.parse.urlencode({
+              "part": "id,snippet,status",
+              "broadcastStatus": "active",
+              "broadcastType": "all",
+              "maxResults": "10",
+          })
+
+          req = urllib.request.Request(
+              "https://www.googleapis.com/youtube/v3/liveBroadcasts?"
+              + params,
+              headers={
+                  "Authorization":
+                  "Bearer " + access_token
+              },
+          )
+
+          with urllib.request.urlopen(req) as r:
+              data = json.loads(r.read().decode())
+
+          items = data.get("items", [])
+
+          live_id = ""
+
+          if items:
+              live_id = items[0]["id"]
+
+              print(
+                  "Active Live ditemukan: "
+                  + live_id
+              )
+          else:
+              print("Tidak ada broadcast ACTIVE.")
+
+          if not live_id:
+              if fallback:
+                  live_id = fallback
+                  print(
+                      "Menggunakan FALLBACK_LIVE_ID."
+                  )
+              else:
+                  raise SystemExit(
+                      "ERROR: Tidak ada Live ID aktif."
+                  )
+
+          with open(os.environ["GITHUB_ENV"], "a") as f:
+              f.write("YOUTUBE_LIVE_ID=" + live_id + "
+")
+
+          print("YOUTUBE_LIVE_ID berhasil diset.")
+          PY2
+
+      - name: Start Chat Bot
+        env:
+          YOUTUBE_LIVE_ID: ${{ env.YOUTUBE_LIVE_ID }}
+        run: |
+          echo "===== START CHAT BOT ====="
+          echo "Live ID berhasil dideteksi."
+          python3 bot.py > bot.log 2>&1 &
+
+          sleep 3
+
+          echo "===== BOT PROCESS ====="
+          ps aux | grep '[p]ython3 bot.py' || true
+
+      - name: Check dependencies
+        run: |
+          echo "===== FFMPEG ====="
+          command -v ffmpeg
+          ffmpeg -version | head -1
+          echo "===== CHROMIUM ====="
+          command -v chromium-browser || command -v chromium
+          chromium --version || chromium-browser --version
+
+      - name: Start Stream
+        env:
+          YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+        run: |
+          echo "===== START XVFB ====="
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          sleep 3
+
+          echo "===== START PULSEAUDIO ====="
+          pulseaudio --start --system=false --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=stream_sink sink_properties=device.description=StreamSink
+          export PULSE_SINK=stream_sink
+
+          # Matikan Google Translate melalui Chromium policy
+          sudo mkdir -p /etc/chromium/policies/managed
+          sudo mkdir -p /etc/chromium-browser/policies/managed
+          printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null
+          printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium-browser/policies/managed/stream-policy.json > /dev/null
+
+          sleep 2
+
+          echo "===== START HTTP SERVER ====="
+          python3 -m http.server 8000 > http.log 2>&1 &
+          sleep 3
+
+          echo "===== START CHROMIUM 3D ====="
+          chromium-browser \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu-sandbox \
+            --ignore-gpu-blocklist \
+            --enable-webgl \
+            --use-angle=swiftshader \
+            --enable-unsafe-swiftshader \
+            --window-size=1280,720 \
+            --kiosk \
+            --no-first-run \
+            --autoplay-policy=no-user-gesture-required \
+            --disable-features=Translate,TranslateUI \
+            --disable-translate \
+            --lang=id-ID \
+            --user-data-dir=/tmp/chromium-profile \
+            http://127.0.0.1:8000/index.html &
+
+          sleep 10
+
+          echo "===== CHROMIUM PROCESS ====="
+          ps aux | grep chromium | grep -v grep || true
+
+          echo "===== SCREEN TEST ====="
+          import -display :99 -window root /tmp/stream-screen.png
+          file /tmp/stream-screen.png
+
+          echo "===== START FFMPEG LOOP ====="
+          set +e
+
+          while true; do
+            ffmpeg \
+              -draw_mouse 0 \
+              -thread_queue_size 1024 \
+              -f x11grab \
+              -video_size 1280x720 \
+              -framerate 25 \
+              -i :99.0 \
+              -thread_queue_size 1024 \
+              -f pulse \
+              -i stream_sink.monitor \
+              -c:v libx264 \
+              -preset ultrafast \
+              -tune zerolatency \
+              -pix_fmt yuv420p \
+              -r 25 \
+              -b:v 2000k \
+              -maxrate 2000k \
+              -bufsize 4000k \
+              -g 50 \
+              -c:a aac \
+              -b:a 128k \
+              -ar 44100 \
+              -f flv \
+              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+
+            echo "FFmpeg terhenti. Reconnect dalam 3 detik..."
+            sleep 3
+          done
+
+      - name: Upload diagnostic screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-diagnostic
+          path: |
+            /tmp/stream-screen.png
+            http.log

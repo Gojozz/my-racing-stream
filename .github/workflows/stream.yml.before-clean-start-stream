@@ -1,0 +1,253 @@
+name: YouTube Live Stream
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: youtube-live-stream
+  cancel-in-progress: true
+
+jobs:
+  stream:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ffmpeg \
+            xvfb \
+            pulseaudio \
+            pulseaudio-utils \
+            chromium-browser \
+            imagemagick \
+            mesa-utils \
+            libgl1-mesa-dri \
+            python3-pip \
+            wget
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --break-system-packages pytchat httpx google-api-python-client google-auth google-auth-httplib2 groq
+
+      - name: Install Piper TTS
+        run: |
+          echo "===== INSTALL PIPER TTS ====="
+          python3 -m pip install --break-system-packages piper-tts
+
+          echo "===== CEK PIPER ====="
+          command -v piper
+          piper --help | head -10
+
+          echo "===== DOWNLOAD VOICE INDONESIA ====="
+          mkdir -p piper_models
+          cd piper_models
+
+          wget -q --show-progress \
+            https://huggingface.co/rhasspy/piper-voices/resolve/main/id/id_ID/news_tts/medium/id_ID-news_tts-medium.onnx
+
+          wget -q --show-progress \
+            https://huggingface.co/rhasspy/piper-voices/resolve/main/id/id_ID/news_tts/medium/id_ID-news_tts-medium.onnx.json
+
+          cd ..
+
+          echo "===== CEK MODEL PIPER ====="
+          ls -lh piper_models/id_ID-news_tts-medium.*
+
+      - name: Start PulseAudio
+        run: |
+          echo "===== START PULSEAUDIO ====="
+          pulseaudio --start --system=false --exit-idle-time=-1
+
+          echo "===== CREATE STREAM SINK ====="
+          pactl load-module module-null-sink \
+            sink_name=stream_sink \
+            sink_properties=device.description=StreamSink
+
+          echo "===== PULSEAUDIO CHECK ====="
+          pactl info
+          pactl list short sinks
+
+      - name: Start Chat Bot
+        env:
+          YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PIPER_BIN: piper
+          PIPER_MODEL: ${{ github.workspace }}/piper_models/id_ID-news_tts-medium.onnx
+          PULSE_SINK: stream_sink
+        run: |
+          echo "===== START CHAT BOT ====="
+          python3 -u bot.py > bot.log 2>bot-error.log &
+          sleep 3
+          echo "===== BOT PROCESS ====="
+          ps aux | grep '[p]ython3 bot.py' || true
+          echo "===== BOT LOG ====="
+          cat bot.log 2>/dev/null || true
+          echo "===== BOT ERROR ====="
+          cat bot-error.log 2>/dev/null || true
+
+      - name: Check dependencies
+        run: |
+          echo "===== FFMPEG ====="
+          command -v ffmpeg
+          ffmpeg -version | head -1
+          echo "===== CHROMIUM ====="
+          command -v chromium-browser || command -v chromium
+          chromium --version || chromium-browser --version
+
+      - name: Start Stream
+        env:
+          YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+          YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PIPER_BIN: piper
+          PIPER_MODEL: ${{ github.workspace }}/piper_models/id_ID-news_tts-medium.onnx
+          PULSE_SINK: stream_sink
+        run: |
+          echo "===== START XVFB ====="
+          Xvfb :99 -screen 0 1280x720x24 &
+          export DISPLAY=:99
+          sleep 3
+
+          sudo mkdir -p /etc/chromium/policies/managed
+          sudo mkdir -p /etc/chromium-browser/policies/managed
+
+          printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null
+          printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium-browser/policies/managed/stream-policy.json > /dev/null
+
+          sleep 2
+
+          echo "===== START HTTP SERVER ====="
+          python3 -m http.server 8000 > http.log 2>&1 &
+          sleep 3
+
+          echo "===== START CHROMIUM 3D ====="
+          chromium-browser \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --disable-gpu-sandbox \
+            --ignore-gpu-blocklist \
+            --enable-webgl \
+            --use-angle=swiftshader \
+            --enable-unsafe-swiftshader \
+            --window-size=1280,720 \
+            --kiosk \
+            --no-first-run \
+            --autoplay-policy=no-user-gesture-required \
+            --disable-features=Translate,TranslateUI \
+            --disable-translate \
+            --lang=id-ID \
+            --user-data-dir=/tmp/chromium-profile \
+            http://127.0.0.1:8000/index.html &
+
+          sleep 10
+
+          echo "===== CHROMIUM PROCESS ====="
+          ps aux | grep chromium | grep -v grep || true
+
+          echo "===== SCREEN TEST ====="
+          import -display :99 -window root /tmp/stream-screen.png
+          file /tmp/stream-screen.png
+
+          echo "===== START FFMPEG STREAM ====="
+          set +e
+
+          (
+            while true; do
+
+              ffmpeg \
+                -draw_mouse 0 \
+                -thread_queue_size 1024 \
+                -f x11grab \
+                -video_size 1280x720 \
+                -framerate 25 \
+                -i :99.0 \
+                -thread_queue_size 1024 \
+                -f pulse \
+                -i stream_sink.monitor \
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 2000k \
+                -maxrate 2000k \
+                -bufsize 4000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+
+              echo "FFmpeg terhenti. Reconnect dalam 3 detik..."
+              sleep 3
+
+            done
+          ) > ffmpeg.log 2>&1 &
+
+          FFMPEG_PID=$!
+
+          echo "FFmpeg PID: $FFMPEG_PID"
+          echo "===== MENUNGGU STREAM AKTIF ====="
+          sleep 20
+
+          echo "===== START LUNA CHAT BOT ====="
+          python3 -u bot.py > bot.log 2>bot-error.log &
+
+          BOT_PID=$!
+
+          echo "LUNA PID: $BOT_PID"
+          sleep 8
+
+          echo "===== LUNA PROCESS ====="
+          ps aux | grep '[p]ython3 -u bot.py' || true
+
+          echo "===== LUNA LOG ====="
+          cat bot.log 2>/dev/null || true
+
+          echo "===== LUNA ERROR ====="
+          cat bot-error.log 2>/dev/null || true
+
+          echo "===== FFMPEG LOG ====="
+          tail -80 ffmpeg.log 2>/dev/null || true
+
+          echo "===== STREAM + LUNA ONLINE ====="
+
+          while true; do
+
+            if ! kill -0 "$FFMPEG_PID" 2>/dev/null; then
+              echo "ERROR: FFmpeg mati."
+              tail -100 ffmpeg.log 2>/dev/null || true
+              exit 1
+            fi
+
+            if ! kill -0 "$BOT_PID" 2>/dev/null; then
+              echo "ERROR: LUNA mati."
+              cat bot.log 2>/dev/null || true
+              cat bot-error.log 2>/dev/null || true
+              exit 1
+            fi
+
+            sleep 30
+
+          done
+
+      - name: Upload diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stream-diagnostic
+          path: |
+            /tmp/stream-screen.png
+            http.log
+            bot.log
+            bot-error.log
+            chat_state.json
