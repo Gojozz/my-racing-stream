@@ -204,7 +204,7 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 
 GROQ_MODEL = os.environ.get(
     "GROQ_MODEL",
-    "llama-3.1-8b-instant"
+    "openai/gpt-oss-20b"
 )
 
 groq_client = None
