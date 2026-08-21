@@ -380,6 +380,7 @@
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <script>
 
@@ -1477,341 +1478,138 @@ function createWheel() {
 }
 
 
-function createCarMesh(colorHex) {
-    const carGroup = new THREE.Group();
 
-    const bodyMat = new THREE.MeshStandardMaterial({
-        color: colorHex,
-        metalness: 0.55,
-        roughness: 0.35
-    });
-
-    const darkMat = new THREE.MeshStandardMaterial({
-        color: 0x0d0d0f,
-        metalness: 0.3,
-        roughness: 0.5
-    });
-
-    const glassMat = new THREE.MeshStandardMaterial({
-        color: 0x1c2a3a,
-        metalness: 0.9,
-        roughness: 0.1,
-        transparent: true,
-        opacity: 0.75
-    });
-
-    const lightMat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        emissive: 0xffffff,
-        emissiveIntensity: 1.2
-    });
-
-    const tailMat = new THREE.MeshStandardMaterial({
-        color: 0xff2222,
-        emissive: 0xaa0000,
-        emissiveIntensity: 0.9
-    });
-
-
-    // Chassis
-    const baseGeo = new THREE.BoxGeometry(
-        2.0,
-        0.35,
-        4.4
-    );
-
-    const base = new THREE.Mesh(
-        baseGeo,
-        darkMat
-    );
-
-    base.position.y = 0.32;
-    base.castShadow = true;
-    carGroup.add(base);
-
-
-    // Bodi utama
-    const bodyGeo = new THREE.BoxGeometry(
-        2.1,
-        0.55,
-        3.6
-    );
-
-    const body = new THREE.Mesh(
-        bodyGeo,
-        bodyMat
-    );
-
-    body.position.y = 0.68;
-    body.castShadow = true;
-    carGroup.add(body);
-
-
-    // Hidung depan
-    const noseGeo = new THREE.BoxGeometry(
-        1.9,
-        0.4,
-        0.9
-    );
-
-    const nose = new THREE.Mesh(
-        noseGeo,
-        bodyMat
-    );
-
-    nose.position.set(
-        0,
-        0.55,
-        2.15
-    );
-
-    nose.rotation.x = -0.18;
-    nose.castShadow = true;
-    carGroup.add(nose);
-
-
-    // Kabin
-    const cabinGeo = new THREE.BoxGeometry(
-        1.55,
-        0.5,
-        1.9
-    );
-
-    const cabin = new THREE.Mesh(
-        cabinGeo,
-        glassMat
-    );
-
-    cabin.position.set(
-        0,
-        1.06,
-        -0.2
-    );
-
-    cabin.castShadow = true;
-    carGroup.add(cabin);
-
-
-    // Atap
-    const roofGeo = new THREE.BoxGeometry(
-        1.4,
-        0.12,
-        1.3
-    );
-
-    const roof = new THREE.Mesh(
-        roofGeo,
-        bodyMat
-    );
-
-    roof.position.set(
-        0,
-        1.34,
-        -0.25
-    );
-
-    carGroup.add(roof);
-
-
-    // Spoiler
-    const spoilerStandGeo = new THREE.BoxGeometry(
-        0.12,
-        0.5,
-        0.12
-    );
-
-    const standL = new THREE.Mesh(
-        spoilerStandGeo,
-        darkMat
-    );
-
-    standL.position.set(
-        -0.75,
-        0.95,
-        -2.05
-    );
-
-    carGroup.add(standL);
-
-    const standR = standL.clone();
-
-    standR.position.x = 0.75;
-    carGroup.add(standR);
-
-
-    const spoilerWingGeo = new THREE.BoxGeometry(
-        1.9,
-        0.1,
-        0.5
-    );
-
-    const spoilerWing = new THREE.Mesh(
-        spoilerWingGeo,
-        darkMat
-    );
-
-    spoilerWing.position.set(
-        0,
-        1.2,
-        -2.1
-    );
-
-    spoilerWing.castShadow = true;
-    carGroup.add(spoilerWing);
-
-
-    // Lampu depan
-    const lightGeo = new THREE.BoxGeometry(
-        0.45,
-        0.16,
-        0.08
-    );
-
-    const leftLight = new THREE.Mesh(
-        lightGeo,
-        lightMat
-    );
-
-    leftLight.position.set(
-        -0.7,
-        0.62,
-        2.6
-    );
-
-    carGroup.add(leftLight);
-
-    const rightLight = leftLight.clone();
-
-    rightLight.position.x = 0.7;
-    carGroup.add(rightLight);
-
-
-    // Lampu belakang
-    const tailGeo = new THREE.BoxGeometry(
-        0.4,
-        0.18,
-        0.08
-    );
-
-    const leftTail = new THREE.Mesh(
-        tailGeo,
-        tailMat
-    );
-
-    leftTail.position.set(
-        -0.75,
-        0.68,
-        -2.18
-    );
-
-    carGroup.add(leftTail);
-
-    const rightTail = leftTail.clone();
-
-    rightTail.position.x = 0.75;
-    carGroup.add(rightTail);
-
-
-    // Roda
-    const wheelPositions = [
-        [-1.05, 0.15, 1.35],
-        [1.05, 0.15, 1.35],
-        [-1.05, 0.15, -1.35],
-        [1.05, 0.15, -1.35]
-    ];
-
-    wheelPositions.forEach(pos => {
-        const wheel = createWheel();
-
-        wheel.position.set(
-            pos[0],
-            pos[1],
-            pos[2]
-        );
-
-        carGroup.add(wheel);
-    });
-
-
-    carGroup.traverse(obj => {
-        if (obj.isMesh) {
-            obj.castShadow = true;
-        }
-    });
-
-    return carGroup;
-}
-
-
-/* =========================================================
-   5 MOBIL AI
-========================================================= */
-
-const cars = [
-    {
-        name: "Merah",
-        color: "#e8232f",
-        mesh: createCarMesh(0xe8232f),
-        progress: 0.000,
-        baseSpeed: 0.00078,
-        laneOffset: -6.0,
-        targetLane: -6.0,
-        lap: 1,
-        totalDistance: 0
-    },
-
-    {
-        name: "Biru",
-        color: "#1e88e5",
-        mesh: createCarMesh(0x1e88e5),
-        progress: 0.008,
-        baseSpeed: 0.00076,
-        laneOffset: -3.0,
-        targetLane: -3.0,
-        lap: 1,
-        totalDistance: 0.008
-    },
-
-    {
-        name: "Kuning",
-        color: "#ffd400",
-        mesh: createCarMesh(0xffd400),
-        progress: 0.016,
-        baseSpeed: 0.00075,
-        laneOffset: 0.0,
-        targetLane: 0.0,
-        lap: 1,
-        totalDistance: 0.016
-    },
-
-    {
-        name: "Hijau",
-        color: "#2e9e44",
-        mesh: createCarMesh(0x2e9e44),
-        progress: 0.024,
-        baseSpeed: 0.00077,
-        laneOffset: 3.0,
-        targetLane: 3.0,
-        lap: 1,
-        totalDistance: 0.024
-    },
-
-    {
-        name: "Putih",
-        color: "#f2f2f2",
-        mesh: createCarMesh(0xf2f2f2),
-        progress: 0.032,
-        baseSpeed: 0.00074,
-        laneOffset: 6.0,
-        targetLane: 6.0,
-        lap: 1,
-        totalDistance: 0.032
-    }
+const CAR_URL = "assets/car.glb";
+const CAR_SCALE = 0.0189;
+const CAR_Y_OFFSET = 0.0;
+
+let carTemplate = null;
+let cars = [];
+
+// Palette warna + nama global (diacak tiap race)
+const COLOR_POOL = [
+    { name: "Alex",   color: "#e8232f", hex: 0xe8232f },
+    { name: "Sofia",  color: "#1e88e5", hex: 0x1e88e5 },
+    { name: "Yuki",   color: "#ffd400", hex: 0xffd400 },
+    { name: "Carlos", color: "#2e9e44", hex: 0x2e9e44 },
+    { name: "Maya",   color: "#ff2d95", hex: 0xff2d95 },
+    { name: "Omar",   color: "#9c27b0", hex: 0x9c27b0 },
+    { name: "Lina",   color: "#00bcd4", hex: 0x00bcd4 },
+    { name: "Noah",   color: "#ff9800", hex: 0xff9800 },
+    { name: "Aya",    color: "#e91e63", hex: 0xe91e63 },
+    { name: "Ken",    color: "#607d8b", hex: 0x607d8b }
 ];
 
-cars.forEach(car => {
-    scene.add(car.mesh);
-});
+function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+}
+
+function makeCarColors() {
+    const picked = shuffle(COLOR_POOL).slice(0, 5);
+    const speeds = [0.00078, 0.00076, 0.00075, 0.00077, 0.00074];
+    const lanes  = [-6.0, -3.0, 0.0, 3.0, 6.0];
+    return picked.map((p, i) => ({
+        name: p.name,
+        color: p.color,
+        hex: p.hex,
+        progress: i * 0.008,
+        baseSpeed: speeds[i],
+        laneOffset: lanes[i]
+    }));
+}
+
+let carColors = makeCarColors();
+
+function tintCarMesh(root, colorHex) {
+    root.traverse(obj => {
+        if (!obj.isMesh || !obj.material) return;
+        if (Array.isArray(obj.material)) {
+            obj.material = obj.material.map(m => m.clone());
+            obj.material.forEach(m => { if (m.color) m.color.setHex(colorHex); });
+        } else {
+            obj.material = obj.material.clone();
+            if (obj.material.color) obj.material.color.setHex(colorHex);
+        }
+        obj.castShadow = true;
+        obj.receiveShadow = true;
+    });
+}
+
+function createCarMesh(colorHex) {
+    if (!carTemplate) {
+        const g = new THREE.Group();
+        const box = new THREE.Mesh(
+            new THREE.BoxGeometry(2.0, 0.8, 4.2),
+            new THREE.MeshStandardMaterial({ color: colorHex, metalness: 0.4, roughness: 0.4 })
+        );
+        box.position.y = 0.5;
+        g.add(box);
+        return g;
+    }
+    const car = carTemplate.clone(true);
+    car.scale.setScalar(CAR_SCALE);
+    car.position.y = CAR_Y_OFFSET;
+    tintCarMesh(car, colorHex);
+    return car;
+}
+
+function buildCarsFromTemplate() {
+    cars.forEach(c => { if (c.mesh) scene.remove(c.mesh); });
+    cars.length = 0;
+    carColors = makeCarColors(); // acak lagi tiap rebuild
+    carColors.forEach(c => {
+        const mesh = createCarMesh(c.hex);
+        cars.push({
+            name: c.name,
+            color: c.color,
+            mesh: mesh,
+            progress: c.progress,
+            baseSpeed: c.baseSpeed,
+            laneOffset: c.laneOffset,
+            targetLane: c.laneOffset,
+            lap: 1,
+            totalDistance: c.progress
+        });
+        scene.add(mesh);
+    });
+    console.log("[CAR] 5 mobil siap (warna acak)");
+}
+
+function loadCarModel() {
+    return new Promise((resolve, reject) => {
+        if (typeof THREE.GLTFLoader === "undefined") {
+            reject(new Error("GLTFLoader missing"));
+            return;
+        }
+        const loader = new THREE.GLTFLoader();
+        loader.load(CAR_URL, (gltf) => {
+            carTemplate = gltf.scene;
+            carTemplate.traverse(obj => {
+                if (obj.isMesh) {
+                    obj.castShadow = true;
+                    obj.receiveShadow = true;
+                }
+            });
+            resolve(carTemplate);
+        }, undefined, reject);
+    });
+}
+
+loadCarModel()
+    .then(() => {
+        buildCarsFromTemplate();
+        if (typeof createCarNameLabels === "function") createCarNameLabels();
+    })
+    .catch(() => {
+        console.warn("[CAR] fallback box");
+        buildCarsFromTemplate();
+    });
+
 
 
 /* =========================================================
@@ -1828,11 +1626,7 @@ const activeCountEl = document.getElementById('active-count');
 const queueCountEl = document.getElementById('queue-count');
 
 const defaultPlayerNames = [
-    "Merah",
-    "Biru",
-    "Kuning",
-    "Hijau",
-    "Putih"
+    "Alex", "Sofia", "Yuki", "Carlos", "Maya"
 ];
 
 let pendingChatPlayers = [];
@@ -2487,7 +2281,39 @@ if (spectatorMode === 2) {
 // P1 / P2 / P3
 // ---------------------------------------------------------
 
-if (
+// ---------------------------------------------------------
+// COUNTDOWN: depan → samping di garis start
+// ---------------------------------------------------------
+if (countdownActive || !raceStarted) {
+
+    const startPt = trackCurve.getPointAt(0);
+    const startTang = trackCurve.getTangentAt(0);
+    const side = new THREE.Vector3(-startTang.z, 0, startTang.x).normalize();
+
+    // progress 0 = depan, 1 = samping (selama countdown 3→GO)
+    let t = 0;
+    if (typeof countdownValue === "number") {
+        // countdownValue: 3,2,1,0(GO) → t naik
+        t = Math.max(0, Math.min(1, (3 - countdownValue) / 3));
+        if (countdownValue <= 0) t = 1;
+    }
+
+    const frontPos = startPt.clone()
+        .add(startTang.clone().multiplyScalar(14))
+        .add(new THREE.Vector3(0, 5, 0));
+
+    const sidePos = startPt.clone()
+        .add(side.clone().multiplyScalar(16))
+        .add(startTang.clone().multiplyScalar(2))
+        .add(new THREE.Vector3(0, 6, 0));
+
+    const wantedPosition = frontPos.clone().lerp(sidePos, t);
+    const lookTarget = startPt.clone().add(new THREE.Vector3(0, 1.5, 0));
+
+    camera.position.lerp(wantedPosition, 0.05);
+    camera.lookAt(lookTarget);
+}
+else if (
     spectatorMode === 0 ||
     spectatorMode === 1 ||
     spectatorMode === 2
@@ -2506,22 +2332,22 @@ if (
         pt.clone()
             .add(
                 tang.clone()
-                    .multiplyScalar(-17)
+                    .multiplyScalar(-12)
             )
             .add(
-                new THREE.Vector3(0, 9, 0)
+                new THREE.Vector3(0, 5.5, 0)
             );
 
     const wantedLook =
         pt.clone()
             .add(
                 tang.clone()
-                    .multiplyScalar(12)
+                    .multiplyScalar(8)
             );
 
     camera.position.lerp(
         wantedPosition,
-        0.035
+        0.06
     );
 
     camera.lookAt(
@@ -2535,46 +2361,18 @@ if (
 
 else if (spectatorMode === 3) {
 
-    const a =
-        sortedCars[0];
-
-    const b =
-        sortedCars[1] || a;
-
-    const c =
-        sortedCars[2] || a;
-
-    const average =
-        (
-            a.progress +
-            b.progress +
-            c.progress
-        ) / 3;
-
-    const prog =
-        average % 1.0;
-
-    const pt =
-        trackCurve.getPointAt(prog);
-
-    const tang =
-        trackCurve.getTangentAt(prog);
+    // ATAS — lihat seluruh pack mobil
+    let sum = 0;
+    sortedCars.forEach(c => { sum += c.progress; });
+    const average = sum / sortedCars.length;
+    const prog = average % 1.0;
+    const pt = trackCurve.getPointAt(prog);
 
     const wantedPosition =
         pt.clone()
-            .add(
-                tang.clone()
-                    .multiplyScalar(-22)
-            )
-            .add(
-                new THREE.Vector3(0, 13, 0)
-            );
+            .add(new THREE.Vector3(0, 45, 0));
 
-    camera.position.lerp(
-        wantedPosition,
-        0.025
-    );
-
+    camera.position.lerp(wantedPosition, 0.03);
     camera.lookAt(pt);
 }
 
@@ -2584,33 +2382,18 @@ else if (spectatorMode === 3) {
 
 else if (spectatorMode === 4) {
 
-    const leader =
-        sortedCars[0];
-
-    const prog =
-        leader.progress % 1.0;
-
-    const pt =
-        trackCurve.getPointAt(prog);
-
-    const tang =
-        trackCurve.getTangentAt(prog);
+    // ATAS LEBAR — semua mobil + sebagian track
+    let sum = 0;
+    sortedCars.forEach(c => { sum += c.progress; });
+    const average = sum / sortedCars.length;
+    const prog = average % 1.0;
+    const pt = trackCurve.getPointAt(prog);
 
     const wantedPosition =
         pt.clone()
-            .add(
-                tang.clone()
-                    .multiplyScalar(-29)
-            )
-            .add(
-                new THREE.Vector3(0, 18, 0)
-            );
+            .add(new THREE.Vector3(0, 60, 0));
 
-    camera.position.lerp(
-        wantedPosition,
-        0.018
-    );
-
+    camera.position.lerp(wantedPosition, 0.025);
     camera.lookAt(pt);
 }
 
