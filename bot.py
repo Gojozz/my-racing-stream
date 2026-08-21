@@ -204,7 +204,7 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 
 GROQ_MODEL = os.environ.get(
     "GROQ_MODEL",
-    "openai/gpt-oss-20b"
+    "qwen/qwen3.6-27b"
 )
 
 groq_client = None
@@ -485,81 +485,65 @@ def speak(text):
 # GROQ RESPONSE
 # =========================================================
 
+
+
+
+
 def ask_luna(user_name, message, context="chat"):
 
     if not groq_client:
+        print("[LUNA ERROR] groq_client kosong")
         return None
 
     try:
-
         if context == "chat":
-
             prompt = (
-                f"Penonton {user_name} bilang: {message}\n"
+                "Penonton " + str(user_name) + " bilang: " + str(message) + ". "
                 "Balas singkat ala komentator balap yang kocak. "
                 "Sebut namanya, boleh nyambung soal balapan."
             )
-
         elif context == "commentary":
-
             prompt = (
                 "Kasih 1 kalimat komentar balap yang overreact dan kocak, "
                 "seolah mobil lagi ngebut di sirkuit."
             )
-
         else:
+            prompt = str(message)
 
-            prompt = message
+        print("[LUNA] panggil Groq model=" + str(GROQ_MODEL))
 
         response = groq_client.chat.completions.create(
-
             model=GROQ_MODEL,
-
             messages=[
-                {
-                    "role": "system",
-                    "content": LUNA_SYSTEM_PROMPT
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
+                {"role": "system", "content": LUNA_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
             ],
-
             temperature=0.9,
-
-            max_tokens=50
+            max_tokens=80,
         )
 
-        text = (
-            response
-            .choices[0]
-            .message
-            .content
-            .strip()
-        )
+        choice = response.choices[0].message
+        raw = getattr(choice, "content", None)
+        print("[LUNA RAW] " + repr(raw))
 
-        text = clean_tts_text(text)
+        if not raw or not str(raw).strip():
+            print("[LUNA ERROR] response content kosong")
+            return None
 
-        # Pastikan maksimal satu kalimat.
-        text = text.replace("\n", " ")
-
+        text = clean_tts_text(str(raw))
+        text = " ".join(text.split())
         if len(text) > 180:
             text = text[:180].rsplit(" ", 1)[0]
+
+        if not text:
+            print("[LUNA ERROR] text kosong setelah clean")
+            return None
 
         return text
 
     except Exception as e:
-
-        print(f"[LUNA ERROR] {e}")
-
+        print("[LUNA ERROR] " + type(e).__name__ + ": " + str(e))
         return None
-
-
-# =========================================================
-# ENGAGEMENT
-# =========================================================
-
 
 
 
