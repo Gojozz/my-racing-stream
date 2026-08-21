@@ -492,40 +492,44 @@ def speak(text):
 
 
 
+
 def strip_model_thinking(text):
-    """Buang chain-of-thought model (qwen dll)."""
+    """Buang chain-of-thought + ambil jawaban final atau draft."""
     text = str(text or "")
 
-    # Kalau ada </think>, ambil hanya bagian SETELAH penutup
+    # 1. Kalau ada </think>, ambil bagian setelahnya
     if re.search(r"</think>", text, flags=re.I):
         parts = re.split(r"</think>", text, flags=re.I)
-        text = parts[-1]
-    else:
-        # Belum ada </think> sama sekali = masih thinking → kosongkan
-        if re.search(r"<think>", text, flags=re.I):
-            return ""
+        final = parts[-1].strip()
+        if final:
+            final = re.sub(r"</?think>", "", final, flags=re.I)
+            final = re.sub(r"\s+", " ", final).strip()
+            if final:
+                return final
 
-    # Bersihkan sisa tag
+    # 2. Coba ambil draft yang biasa ditulis model di dalam thinking
+    #    Contoh: - "Woy Tanidong, pagi-pagi udah gaspol..."
+    draft_patterns = [
+        r'[-•*]\s*"([^"]{10,120})"',
+        r'Draft[^:]*:\s*"([^"]{10,120})"',
+        r'jawaban[^:]*:\s*"([^"]{10,120})"',
+        r'reply[^:]*:\s*"([^"]{10,120})"',
+        r'"([A-Z][^"]{15,100})"',
+    ]
+    for pat in draft_patterns:
+        m = re.search(pat, text, flags=re.I | re.DOTALL)
+        if m:
+            candidate = m.group(1).strip()
+            # Pastikan kelihatan seperti kalimat Indonesia
+            if any(w in candidate.lower() for w in ["woy", "gas", "mantap", "pagi", "bro", "gila", "buset", "anjay", "lintasan", "balap", "nonton"]):
+                return candidate
+
+    # 3. Kalau masih ada <think> dan tidak ketemu draft → kosong
+    if re.search(r"<think>", text, flags=re.I):
+        return ""
+
+    # 4. Fallback: bersihkan tag saja
     text = re.sub(r"</?think>", "", text, flags=re.I)
-
-    # Hapus baris analisis umum
-    lines = []
-    for line in text.splitlines():
-        s = line.strip()
-        if not s:
-            continue
-        low = s.lower()
-        if low.startswith("here") and "thinking" in low:
-            continue
-        if low.startswith("analyze user") or low.startswith("**analyze"):
-            continue
-        if low.startswith("1.") and "user" in low:
-            continue
-        if low.startswith("key requirements"):
-            continue
-        lines.append(s)
-
-    text = " ".join(lines)
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
@@ -541,12 +545,13 @@ def ask_luna(user_name, message, context="chat"):
             prompt = (
                 "Penonton " + str(user_name) + " bilang: " + str(message) + ". "
                 "Balas singkat ala komentator balap yang kocak. "
-                "Sebut namanya, boleh nyambung soal balapan."
+                "Sebut namanya, boleh nyambung soal balapan. "
+                "Langsung jawab 1 kalimat saja, jangan thinking panjang."
             )
         elif context == "commentary":
             prompt = (
                 "Kasih 1 kalimat komentar balap yang overreact dan kocak, "
-                "seolah mobil lagi ngebut di sirkuit."
+                "seolah mobil lagi ngebut di sirkuit. Langsung jawab saja."
             )
         else:
             prompt = str(message)
@@ -559,13 +564,13 @@ def ask_luna(user_name, message, context="chat"):
                 {"role": "system", "content": LUNA_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.9,
-            max_tokens=300,          # cukup untuk thinking + jawaban
+            temperature=0.85,
+            max_tokens=450,
         )
 
         choice = response.choices[0].message
         raw = getattr(choice, "content", None)
-        print("[LUNA RAW] " + repr(raw))
+        print("[LUNA RAW] " + repr(raw)[:500])
 
         if not raw or not str(raw).strip():
             print("[LUNA ERROR] response content kosong")
@@ -573,13 +578,14 @@ def ask_luna(user_name, message, context="chat"):
 
         text = clean_tts_text(strip_model_thinking(str(raw)))
         text = " ".join(text.split())
-        if len(text) > 180:
-            text = text[:180].rsplit(" ", 1)[0]
+        if len(text) > 160:
+            text = text[:160].rsplit(" ", 1)[0]
 
         if not text:
             print("[LUNA ERROR] text kosong setelah clean")
             return None
 
+        print("[LUNA CLEAN] " + text)
         return text
 
     except Exception as e:
