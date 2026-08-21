@@ -269,21 +269,21 @@ engagement_index = 0
 
 
 ENGAGE_PROMOS = [
-    "Woy jangan lupa like-nya, biar balapannya nambah gila!",
-    "Klik subscribe dong, biar kagak ketinggalan race berikutnya!",
-    "Komen di chat, LUNA baca kok, jangan diem aja!",
-    "Like, subscribe, trus ketik join kalau berani turun lintasan!",
-    "Yang baru datang: like dulu, subscribe, baru nonton sambil ngegas!",
-    "Komen 'gas' di chat, biar suasana langsung panas!",
-    "Subscribe-nya jangan pelit, race ini butuh dukungan kalian!",
-    "Pencet like biar algoritma gak tidur, balapan tetap ramai!",
+    "Woy jangan lupa kasih jempol, biar balapannya nambah gila!",
+    "Klik langganan dong, biar kagak ketinggalan balapan berikutnya!",
+    "Komen di kolom komentar, LUNA baca kok, jangan diem aja!",
+    "Kasih jempol, langganan, trus ketik join kalau berani turun lintasan!",
+    "Yang baru datang: kasih jempol dulu, langganan, baru nonton sambil ngegas!",
+    "Komen gas di kolom komentar, biar suasana langsung panas!",
+    "Langganannya jangan pelit, balapan ini butuh dukungan kalian!",
+    "Pencet jempol biar algoritma gak tidur, balapan tetap ramai!",
 ]
 
 JOIN_PROMOS = [
-    "Mau turun ke lintasan? Ketik join di chat, nama kalian jadi pembalap!",
+    "Mau turun ke lintasan? Ketik join di komentar, nama kalian jadi pembalap!",
     "Berani balapan? Ketik join, nanti nama kalian ikut ngegas!",
     "Jangan cuma nonton! Ketik join dan siap-siap jadi pembalap!",
-    "Pengen balapan? Ketik join di chat, siapa tahu mobil kalian paling brutal!",
+    "Pengen balapan? Ketik join di komentar, siapa tahu mobil kalian paling brutal!",
     "Ketik join kalau berani! Nama kalian bisa muncul di lintasan!",
 ]
 
@@ -595,17 +595,11 @@ def ask_luna(user_name, message, context="chat"):
 
 
 LIKE_PROMOS = [
-
-    "Kalau balapannya seru, bantu Luna tekan like, subscribe, dan share ya!",
-
-    "Suka balapannya? Gas like, subscribe, lalu share ke teman kalian!",
-
-    "Jangan pelit like! Subscribe juga, terus share biar makin ramai!",
-
-    "Bantu bikin lintasan ini makin ramai, like, subscribe, dan share!",
-
-    "Kalau deg-degannya terasa, traktir Luna satu like dan jangan lupa subscribe!"
-
+    "Kalau balapannya seru, bantu Luna tekan jempol, langganan, dan share ya!",
+    "Suka balapannya? Gas kasih jempol, langganan, lalu share ke teman kalian!",
+    "Jangan pelit jempol! Langganan juga, terus share biar makin ramai!",
+    "Bantu bikin lintasan ini makin ramai, kasih jempol, langganan, dan share!",
+    "Kalau deg-degannya terasa, traktir Luna satu jempol dan jangan lupa langganan!"
 ]
 
 
@@ -1320,7 +1314,7 @@ def start_bot():
     )
 
     print(
-        "LUNA siap membalas chat."
+        "LUNA siap membalas komentar."
     )
 
     speak("Luna siap. Ketik join untuk ikut balapan.")
@@ -1472,9 +1466,9 @@ def start_bot():
                             # Fallback kalau Groq kosong/gagal
                             if not reply:
                                 reply = random.choice([
-                                    f"Woy {user}, gas terus chat-nya!",
-                                    f"{user} nyolot di chat, LUNA denger nih!",
-                                    f"Mantap {user}, komennya nambah seru!",
+                                    f"Woy {user}, gas terus komentarnya!",
+                                    f"{user} nyolot di komentar, LUNA denger nih!",
+                                    f"Mantap {user}, komentarnya nambah seru!",
                                     f"Siap {user}, LUNA catat di kepala!",
                                     f"Kocak {user}, jangan berhenti komen!",
                                 ])
