@@ -489,6 +489,32 @@ def speak(text):
 
 
 
+
+def strip_model_thinking(text):
+    """Buang chain-of-thought model (qwen/gpt-oss dll)."""
+    text = str(text or "")
+    # Hapus blok <think>...</think>
+    text = re.sub(r"<think>[\s\S]*?</think>", " ", text, flags=re.I)
+    # Jika masih ada sisa <think> tanpa tutup
+    text = re.sub(r"<think>[\s\S]*", " ", text, flags=re.I)
+    # Hapus markdown analisis umum
+    lines = []
+    for line in text.splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        low = s.lower()
+        if low.startswith("here") and "thinking" in low:
+            continue
+        if low.startswith("analyze user") or low.startswith("**analyze"):
+            continue
+        if low.startswith("1.") and "user" in low:
+            continue
+        lines.append(s)
+    text = " ".join(lines)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
 def ask_luna(user_name, message, context="chat"):
 
     if not groq_client:
@@ -530,7 +556,7 @@ def ask_luna(user_name, message, context="chat"):
             print("[LUNA ERROR] response content kosong")
             return None
 
-        text = clean_tts_text(str(raw))
+        text = clean_tts_text(strip_model_thinking(str(raw)))
         text = " ".join(text.split())
         if len(text) > 180:
             text = text[:180].rsplit(" ", 1)[0]
