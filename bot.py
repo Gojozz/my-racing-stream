@@ -269,14 +269,14 @@ engagement_index = 0
 
 
 ENGAGE_PROMOS = [
-    "Woy jangan lupa kasih jempol, biar balapannya nambah gila!",
-    "Klik langganan dong, biar kagak ketinggalan balapan berikutnya!",
+    "Woy jangan lupa laik-nya, biar balapannya nambah gila!",
+    "Klik subs kreb dong, biar kagak ketinggalan balapan berikutnya!",
     "Komen di kolom komentar, LUNA baca kok, jangan diem aja!",
-    "Kasih jempol, langganan, trus ketik join kalau berani turun lintasan!",
-    "Yang baru datang: kasih jempol dulu, langganan, baru nonton sambil ngegas!",
+    "Laik, subs kreb, trus ketik join kalau berani turun lintasan!",
+    "Yang baru datang: laik dulu, subs kreb, baru nonton sambil ngegas!",
     "Komen gas di kolom komentar, biar suasana langsung panas!",
-    "Langganannya jangan pelit, balapan ini butuh dukungan kalian!",
-    "Pencet jempol biar algoritma gak tidur, balapan tetap ramai!",
+    "Subs kreb-nya jangan pelit, balapan ini butuh dukungan kalian!",
+    "Pencet laik biar algoritma gak tidur, balapan tetap ramai!",
 ]
 
 JOIN_PROMOS = [
@@ -595,11 +595,11 @@ def ask_luna(user_name, message, context="chat"):
 
 
 LIKE_PROMOS = [
-    "Kalau balapannya seru, bantu Luna tekan jempol, langganan, dan share ya!",
-    "Suka balapannya? Gas kasih jempol, langganan, lalu share ke teman kalian!",
-    "Jangan pelit jempol! Langganan juga, terus share biar makin ramai!",
-    "Bantu bikin lintasan ini makin ramai, kasih jempol, langganan, dan share!",
-    "Kalau deg-degannya terasa, traktir Luna satu jempol dan jangan lupa langganan!"
+    "Kalau balapannya seru, bantu Luna tekan laik, subs kreb, dan share ya!",
+    "Suka balapannya? Gas laik, subs kreb, lalu share ke teman kalian!",
+    "Jangan pelit laik! Subs kreb juga, terus share biar makin ramai!",
+    "Bantu bikin lintasan ini makin ramai, laik, subs kreb, dan share!",
+    "Kalau deg-degannya terasa, traktir Luna satu laik dan jangan lupa subs kreb!"
 ]
 
 
