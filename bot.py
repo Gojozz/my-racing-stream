@@ -256,7 +256,7 @@ tts_lock = threading.Lock()
 
 last_tts_time = 0.0
 
-CHAT_COOLDOWN = 5.0
+CHAT_COOLDOWN = 4.0
 
 last_chat_response = {}
 
@@ -1408,11 +1408,7 @@ def start_bot():
                 # CHAT → LUNA
                 # =========================================
 
-                if (
-                    groq_client
-                    and
-                    raw_msg
-                ):
+                if raw_msg:
 
                     now = time.time()
 
@@ -1426,50 +1422,40 @@ def start_bot():
                         >= CHAT_COOLDOWN
                     ):
 
-                        # Jangan membalas spam panjang.
+                        # Abaikan chat terlalu panjang
                         if len(raw_msg) <= 180:
 
-                            # Prioritaskan pesan yang
-                            # benar-benar memanggil LUNA.
-                            direct = (
-                                "luna" in msg
-                                or
-                                "bot" in msg
+                            print(
+                                f"[CHAT IN] {user}: {raw_msg}"
                             )
 
-                            # Chat biasa hanya kadang
-                            # dijawab agar tidak berisik.
-                            should_answer = (
-                                direct
-                                or
-                                random.random() < 0.55
-                            )
+                            reply = None
 
-                            if should_answer:
-
+                            if groq_client:
                                 reply = ask_luna(
                                     user,
                                     raw_msg,
                                     "chat"
                                 )
 
-                                if reply:
+                            # Fallback kalau Groq kosong/gagal
+                            if not reply:
+                                reply = random.choice([
+                                    f"Woy {user}, gas terus chat-nya!",
+                                    f"{user} nyolot di chat, LUNA denger nih!",
+                                    f"Mantap {user}, komennya nambah seru!",
+                                    f"Siap {user}, LUNA catat di kepala!",
+                                    f"Kocak {user}, jangan berhenti komen!",
+                                ])
+                                print("[LUNA] fallback tanpa Groq")
 
-                                    print(
-                                        f"[LUNA CHAT] "
-                                        f"{user}: "
-                                        f"{raw_msg}"
-                                    )
+                            print(f"[LUNA CHAT] {user}: {raw_msg}")
+                            print(f"[LUNA] {reply}")
+                            speak(reply)
 
-                                    print(
-                                        f"[LUNA] {reply}"
-                                    )
-
-                                    speak(reply)
-
-                                    last_chat_response[
-                                        user.lower()
-                                    ] = now
+                            last_chat_response[
+                                user.lower()
+                            ] = now
 
         except Exception as e:
 
