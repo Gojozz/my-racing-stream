@@ -234,6 +234,7 @@ Aturan:
 - Jangan menghina penonton
 - Kalau balas chat: sebut nama singkat, langsung lucu
 - Kalau komentar balap: seolah lihat mobil ngebut di lintasan
+- PENTING: Jangan keluarkan thinking process terlalu panjang. Langsung jawab 1 kalimat pendek saja.
 """
 
 
@@ -490,14 +491,24 @@ def speak(text):
 
 
 
+
 def strip_model_thinking(text):
-    """Buang chain-of-thought model (qwen/gpt-oss dll)."""
+    """Buang chain-of-thought model (qwen dll)."""
     text = str(text or "")
-    # Hapus blok <think>...</think>
-    text = re.sub(r"<think>[\s\S]*?</think>", " ", text, flags=re.I)
-    # Jika masih ada sisa <think> tanpa tutup
-    text = re.sub(r"<think>[\s\S]*", " ", text, flags=re.I)
-    # Hapus markdown analisis umum
+
+    # Kalau ada </think>, ambil hanya bagian SETELAH penutup
+    if re.search(r"</think>", text, flags=re.I):
+        parts = re.split(r"</think>", text, flags=re.I)
+        text = parts[-1]
+    else:
+        # Belum ada </think> sama sekali = masih thinking → kosongkan
+        if re.search(r"<think>", text, flags=re.I):
+            return ""
+
+    # Bersihkan sisa tag
+    text = re.sub(r"</?think>", "", text, flags=re.I)
+
+    # Hapus baris analisis umum
     lines = []
     for line in text.splitlines():
         s = line.strip()
@@ -510,10 +521,14 @@ def strip_model_thinking(text):
             continue
         if low.startswith("1.") and "user" in low:
             continue
+        if low.startswith("key requirements"):
+            continue
         lines.append(s)
+
     text = " ".join(lines)
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
 
 def ask_luna(user_name, message, context="chat"):
 
@@ -545,7 +560,7 @@ def ask_luna(user_name, message, context="chat"):
                 {"role": "user", "content": prompt},
             ],
             temperature=0.9,
-            max_tokens=80,
+            max_tokens=300,          # cukup untuk thinking + jawaban
         )
 
         choice = response.choices[0].message
