@@ -630,28 +630,8 @@ function createTree() {
     return group;
 }
 
-// Letakkan pohon di sisi lintasan
-const treePositions = [
-    [-28, 0, -40],
-    [32, 0, -55],
-    [-35, 0, 20],
-    [38, 0, 45],
-    [-42, 0, 80],
-    [45, 0, -10],
-    [-25, 0, 110],
-    [30, 0, 130],
-    [-50, 0, -90],
-    [55, 0, 70]
-];
+// pohon lama dihapus
 
-treePositions.forEach(pos => {
-    const tree = createTree();
-    tree.position.set(pos[0], pos[1], pos[2]);
-    // sedikit variasi ukuran
-    const s = 0.85 + Math.random() * 0.5;
-    tree.scale.set(s, s, s);
-    scene.add(tree);
-});
 
 
 
@@ -761,6 +741,29 @@ const trackCurve =
         "catmullrom",
         0.5
     );
+
+/* Pohon di sisi lintasan — jauh dari aspal & bukan dekat finish */
+(function placeSideTrees() {
+    if (typeof createTree !== "function") return;
+    for (let i = 0; i < 12; i++) {
+        let t = (i + 1) / 14;           // 1/14 .. 12/14
+        if (t < 0.10 || t > 0.90) continue; // jangan dekat start/finish
+        const point = trackCurve.getPointAt(t);
+        const tangent = trackCurve.getTangentAt(t);
+        const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+        const dir = (i % 2 === 0) ? 1 : -1;
+        const dist = TRACK_WIDTH + 16 + (i % 4) * 3;
+        const tree = createTree();
+        tree.position.set(
+            point.x + side.x * dir * dist,
+            0,
+            point.z + side.z * dir * dist
+        );
+        const s = 0.85 + Math.random() * 0.4;
+        tree.scale.setScalar(s);
+        scene.add(tree);
+    }
+})();
 
 
 /* =========================================================
@@ -1634,8 +1637,10 @@ function tintCarMesh(root, colorHex) {
             return;
         }
 
-        // Body & lainnya: matte
+        // Body & lainnya: matte (tidak mengkilap)
         mats.forEach(m => {
+            // clone supaya tidak rusak material template
+            // (kalau sudah di-clone di luar, tetap aman)
             if (m.metalness !== undefined) m.metalness = 0.15;
             if (m.roughness !== undefined) m.roughness = 0.75;
             if (m.emissive) m.emissive.setHex(0x000000);
