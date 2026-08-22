@@ -1026,14 +1026,28 @@ def commentate_race(event, detail=""):
         "winner": f"Pemenang balapan: {detail or 'juara'}. Rayakan singkat.",
     }
 
-    prompt = prompt_map.get(event, f"Event balapan: {event}. {detail}")
+    # Bergantian: sering template (hemat), kadang AI
+    use_ai = bool(groq_client) and (
+        event in ("winner", "start") or random.random() < 0.30
+    )
     reply = None
-    if groq_client:
+    if use_ai:
+        prompt = prompt_map.get(event, f"Event balapan: {event}. {detail}")
         reply = ask_luna("LINTASAN", prompt, "race")
     if not reply:
-        reply = random.choice(fallbacks.get(event, ["Balapan makin seru, gas terus!"]))
+        pool = fallbacks.get(event, ["Balapan makin seru, gas terus!"])
+        # event mid-race generik
+        if event in ("mid", "pulse", "action"):
+            pool = [
+                f"{detail} masih ngegas di depan!" if detail else "Paketan masih ketat, gas terus!",
+                f"Woy {detail} jaga jarak!" if detail else "Tikungan basah, jangan kepleset!",
+                "Buset, lintasan panas banget sekarang!",
+                "Siapa yang bakal nyalip duluan? Deg-degan!",
+                f"Auto fokus ke {detail}, roda masih putar gila!" if detail else "Roda masih putar gila di lintasan!",
+            ]
+        reply = random.choice(pool)
 
-    print(f"[LUNA RACE] event={event} detail={detail} -> {reply}")
+    print(f"[LUNA RACE] event={event} ai={use_ai} detail={detail} -> {reply}")
     speak(reply)
     return reply
 
@@ -1354,9 +1368,15 @@ def start_bot():
 
     print("====================================")
 
-    state = load_state()
-
+    # Reset slot pembalap tiap start stream
+    # biar nama lama (mis. tanidong) tidak nempel tanpa join
+    state = {
+        "active": [],
+        "queue": [],
+        "lastUpdate": 0
+    }
     save_state(state)
+    print("[JOIN] Slot dikosongkan. Tunggu penonton ketik join.")
 
     # Rotation server lama tetap hidup.
     threading.Thread(

@@ -111,7 +111,7 @@ jobs:
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
         run: |
           echo "===== START XVFB ====="
-          Xvfb :99 -screen 0 1280x720x24 &
+          Xvfb :99 -screen 0 720x1280x24 &
           export DISPLAY=:99
           sleep 3
 
@@ -135,7 +135,7 @@ jobs:
             --enable-webgl \
             --use-angle=swiftshader \
             --enable-unsafe-swiftshader \
-            --window-size=1280,720 \
+            --window-size=720,1280 \
             --kiosk \
             --no-first-run \
             --autoplay-policy=no-user-gesture-required \
@@ -162,7 +162,7 @@ jobs:
               -draw_mouse 0 \
               -thread_queue_size 1024 \
               -f x11grab \
-              -video_size 1280x720 \
+              -video_size 720x1280 \
               -framerate 25 \
               -i :99.0 \
               -thread_queue_size 1024 \
@@ -173,9 +173,9 @@ jobs:
               -tune zerolatency \
               -pix_fmt yuv420p \
               -r 25 \
-              -b:v 2000k \
-              -maxrate 2000k \
-              -bufsize 4000k \
+              -b:v 1800k \
+              -maxrate 1800k \
+              -bufsize 3600k \
               -g 50 \
               -c:a aac \
               -b:a 128k \

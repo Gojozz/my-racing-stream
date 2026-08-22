@@ -322,6 +322,14 @@
             margin: 5px 0;
         }
     }
+
+/* SHORTS PORTRAIT */
+@media (max-aspect-ratio: 3/4) {
+    #hud { top: 12px; left: 10px; transform: scale(0.85); transform-origin: top left; }
+    #chat-panels { top: 12px; right: 8px; width: 150px; transform: scale(0.9); transform-origin: top right; }
+    .hud-card { min-width: 180px; padding: 10px 12px; }
+    .hud-value { font-size: 22px; }
+}
 </style>
 </head>
 
@@ -1918,6 +1926,9 @@ const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownText = document.getElementById('countdown-text');
 
 
+let lastRaceCommentAt = 0;
+const RACE_COMMENT_GAP = 14; // detik antar komentar mid-race
+
 function sendRaceEvent(event, detail="") {
     try {
         fetch("http://127.0.0.1:8765/race-event", {
@@ -2133,6 +2144,12 @@ function animate() {
                     car.finished = true;
 
                     finishedCount++;
+                    if (finishedCount === 1) {
+                        sendRaceEvent("finish", car.name);
+                        sendRaceEvent("winner", car.name);
+                    } else {
+                        sendRaceEvent("finish", car.name);
+                    }
 
                     // Mobil pertama yang finish memulai
                     // fase kamera finish.
@@ -2556,6 +2573,23 @@ else if (spectatorMode === 5) {
     camera.lookAt(lookTarget);
 }
 
+    }
+
+    
+    // --- Komentator sepanjang race (throttle) ---
+    if (raceStarted && !isRaceFinished && typeof sendRaceEvent === "function") {
+        const nowSec = performance.now() / 1000;
+        if (nowSec - lastRaceCommentAt >= RACE_COMMENT_GAP) {
+            lastRaceCommentAt = nowSec;
+            const leader = (typeof sortedCars !== "undefined" && sortedCars[0])
+                ? sortedCars[0]
+                : (cars && cars[0]);
+            const name = leader ? leader.name : "";
+            // acak jenis komentar ringan
+            const kinds = ["mid", "pulse", "action"];
+            const kind = kinds[Math.floor(Math.random() * kinds.length)];
+            sendRaceEvent(kind, name);
+        }
     }
 
     updateCarNameLabels();
