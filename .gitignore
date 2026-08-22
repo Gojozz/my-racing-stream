@@ -1,0 +1,11 @@
+*.bak
+*.before-*
+*.backup
+*.tmp
+*.log
+__pycache__/
+*.pyc
+chat_state.json
+chat_state.json.*
+node_modules/
+.DS_Store
