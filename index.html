@@ -1917,6 +1917,17 @@ let countdownTimer = 0;
 const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownText = document.getElementById('countdown-text');
 
+
+function sendRaceEvent(event, detail="") {
+    try {
+        fetch("http://127.0.0.1:8765/race-event", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ event, detail })
+        }).catch(() => {});
+    } catch (e) {}
+}
+
 function startCountdown() {
     raceStarted = false;
     countdownActive = true;
@@ -1967,6 +1978,7 @@ function updateCountdown(deltaSeconds) {
     } else {
         countdownActive = false;
         raceStarted = true;
+        sendRaceEvent("start");
 
         if (countdownOverlay) {
             countdownOverlay.style.display = 'none';

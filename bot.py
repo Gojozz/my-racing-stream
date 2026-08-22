@@ -261,6 +261,14 @@ CHAT_COOLDOWN = 4.0
 
 last_chat_response = {}
 
+# Untuk pilih chat random saat rame
+recent_chat_times = []
+CHAT_BUSY_WINDOW = 20.0   # detik
+CHAT_BUSY_THRESHOLD = 6   # jumlah chat dalam window = rame
+CHAT_REPLY_CHANCE_BUSY = 0.28
+CHAT_REPLY_CHANCE_NORMAL = 0.75
+
+
 ENGAGEMENT_INTERVAL = 90
 
 last_engagement_time = time.time() - 10000
@@ -375,8 +383,10 @@ def run_piper(text):
             stderr=subprocess.DEVNULL
         )
 
+        sink = env.get("PULSE_SINK", "stream_sink")
+        # Selalu pakai device eksplisit biar masuk ke stream_sink.monitor
         result = subprocess.run(
-            ["paplay", str(wav_path)],
+            ["paplay", f"--device={sink}", str(wav_path)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=45,
@@ -386,10 +396,9 @@ def run_piper(text):
         if result.returncode != 0:
             err = result.stderr.decode("utf-8", errors="replace")[-1000:]
             print("[PAPLAY ERROR]", err)
-
-            # Fallback: coba device eksplisit
+            # Fallback tanpa device
             result2 = subprocess.run(
-                ["paplay", f"--device={env['PULSE_SINK']}", str(wav_path)],
+                ["paplay", str(wav_path)],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 timeout=45,
@@ -984,6 +993,51 @@ def rotate_after_race(eliminated_name):
 # RACE RESULT SERVER — TIDAK DIUBAH
 # =========================================================
 
+
+
+def commentate_race(event, detail=""):
+    """Komentar singkat untuk event balapan."""
+    event = str(event or "").lower().strip()
+    detail = str(detail or "").strip()
+
+    # Template cadangan kalau Groq gagal
+    fallbacks = {
+        "start": [
+            "Gas! Lampu hijau, semuanya ngebut dari start!",
+            "Start brutal, roda langsung mengamuk!",
+        ],
+        "overtake": [
+            f"Woy ada nyalip! {detail} menyerobot tikungan!" if detail else "Ada aksi nyalip gila di tikungan!",
+            f"Buset, {detail} nyalip dingin aja!" if detail else "Nyalip dingin, penonton pada stand up!",
+        ],
+        "finish": [
+            f"Finish! {detail} menyeberang garis akhir!" if detail else "Ada yang finish dulu, gila pol!",
+            f"Auto finish buat {detail}, mantap jiwa!" if detail else "Garis finish dilindas, balapan mengeras!",
+        ],
+        "winner": [
+            f"Juara! {detail} menguasai lintasan hari ini!" if detail else "Juara hari ini sudah lahir!",
+        ],
+    }
+
+    prompt_map = {
+        "start": "Balapan baru start. Komentari start-nya singkat dan seru.",
+        "overtake": f"Ada aksi nyalip. Detail: {detail or 'pembalap di tikungan'}. Komentari singkat.",
+        "finish": f"Ada pembalap finish. Detail: {detail or 'seseorang'}. Komentari singkat.",
+        "winner": f"Pemenang balapan: {detail or 'juara'}. Rayakan singkat.",
+    }
+
+    prompt = prompt_map.get(event, f"Event balapan: {event}. {detail}")
+    reply = None
+    if groq_client:
+        reply = ask_luna("LINTASAN", prompt, "race")
+    if not reply:
+        reply = random.choice(fallbacks.get(event, ["Balapan makin seru, gas terus!"]))
+
+    print(f"[LUNA RACE] event={event} detail={detail} -> {reply}")
+    speak(reply)
+    return reply
+
+
 class RaceResultHandler(
     BaseHTTPRequestHandler
 ):
@@ -1015,7 +1069,7 @@ class RaceResultHandler(
 
     def do_POST(self):
 
-        if self.path != "/race-result":
+        if self.path not in ("/race-result", "/race-event"):
 
             self.send_response(404)
 
@@ -1023,6 +1077,27 @@ class RaceResultHandler(
 
             self.end_headers()
 
+            return
+
+        # Event komentator: start / overtake / finish / winner
+        if self.path == "/race-event":
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                body = self.rfile.read(length)
+                data = json.loads(body.decode("utf-8") or "{}")
+                event = str(data.get("event", "")).strip()
+                detail = str(data.get("detail", "")).strip()
+                if event:
+                    commentate_race(event, detail)
+                self.send_response(200)
+                self.send_cors_headers()
+                self.end_headers()
+                self.wfile.write(b"ok")
+            except Exception as e:
+                print(f"[RACE-EVENT ERROR] {e}")
+                self.send_response(500)
+                self.send_cors_headers()
+                self.end_headers()
             return
 
         try:
@@ -1087,6 +1162,12 @@ class RaceResultHandler(
             ):
 
                 last_processed_race = race_id
+
+                # Komentator saat ada yang keluar / finish last
+                try:
+                    commentate_race("finish", eliminated)
+                except Exception as e:
+                    print(f"[LUNA RACE ERROR] {e}")
 
                 self.send_response(200)
 
@@ -1437,6 +1518,11 @@ def start_bot():
 
                     now = time.time()
 
+                    # catat traffic chat
+                    recent_chat_times.append(now)
+                    while recent_chat_times and (now - recent_chat_times[0]) > CHAT_BUSY_WINDOW:
+                        recent_chat_times.pop(0)
+
                     last_user_time = (
                         last_chat_response
                         .get(user.lower(), 0)
@@ -1450,8 +1536,16 @@ def start_bot():
                         # Abaikan chat terlalu panjang
                         if len(raw_msg) <= 180:
 
+                            busy = len(recent_chat_times) >= CHAT_BUSY_THRESHOLD
+                            chance = CHAT_REPLY_CHANCE_BUSY if busy else CHAT_REPLY_CHANCE_NORMAL
+
+                            # Saat rame: pilih random chat yang dibalas
+                            if random.random() > chance:
+                                print(f"[CHAT SKIP] {user}: {raw_msg} (rame={busy})")
+                                continue
+
                             print(
-                                f"[CHAT IN] {user}: {raw_msg}"
+                                f"[CHAT IN] {user}: {raw_msg} (rame={busy})"
                             )
 
                             reply = None
