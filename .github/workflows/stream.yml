@@ -67,9 +67,15 @@ jobs:
             sink_name=stream_sink \
             sink_properties=device.description=StreamSink
 
+          pactl set-sink-mute stream_sink 0
+          pactl set-sink-volume stream_sink 100%
+          pactl set-default-sink stream_sink
+
           echo "===== PULSEAUDIO CHECK ====="
           pactl info
           pactl list short sinks
+          pactl get-sink-volume stream_sink
+          pactl get-sink-mute stream_sink
 
       - name: Start Chat Bot
         env:
