@@ -412,12 +412,12 @@ let raceResetTimer = null;
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x5ba3d9);  // langit biru
+scene.background = new THREE.Color(0x3a6a9a);  // langit lebih gelap
 
 scene.fog = new THREE.Fog(
-    0x87b8d8,   // kabut biru lembut
-    160,
-    650
+    0x4a7aaa,   // kabut lebih gelap
+    140,
+    600
 );
 
 
@@ -471,7 +471,7 @@ renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.75;
+renderer.toneMappingExposure = 0.55;
 
 document.body.appendChild(
     renderer.domElement
@@ -890,8 +890,10 @@ function createRoad() {
     geometry.computeBoundingSphere();
 
     const material =
-        new THREE.MeshBasicMaterial({
-            color: 0x555555,
+        new THREE.MeshStandardMaterial({
+            color: 0x3a3a3a,
+            roughness: 0.95,
+            metalness: 0.05,
             side: THREE.DoubleSide
         });
 
@@ -1030,8 +1032,10 @@ for (
         );
 
     const mat =
-        new THREE.MeshBasicMaterial({
-            color: 0xd0d0d0
+        new THREE.MeshStandardMaterial({
+            color: 0x777777,
+            roughness: 0.9,
+            metalness: 0.0
         });
 
     const dash =
