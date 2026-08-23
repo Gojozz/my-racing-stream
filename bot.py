@@ -197,12 +197,22 @@ last_processed_race = None
 
 
 # =========================================================
-# LUNA AI — DeepSeek V4 Flash (OpenAI-compatible)
+# LUNA AI — Groq (utama) + DeepSeek (opsional fallback)
 # =========================================================
 
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
-# fallback lama (opsional)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+
+GROQ_BASE_URL = os.environ.get(
+    "GROQ_BASE_URL",
+    "https://api.groq.com/openai/v1"
+).rstrip("/")
+
+# Model Groq yang umum tersedia (gratis / cepat)
+GROQ_MODEL = os.environ.get(
+    "GROQ_MODEL",
+    "llama-3.1-8b-instant"
+)
 
 DEEPSEEK_BASE_URL = os.environ.get(
     "DEEPSEEK_BASE_URL",
@@ -214,15 +224,30 @@ DEEPSEEK_MODEL = os.environ.get(
     "deepseek-v4-flash"
 )
 
-# kompatibilitas nama lama di kode
-GROQ_MODEL = DEEPSEEK_MODEL
-groq_client = None  # diganti flag ai_ready
-ai_ready = bool(DEEPSEEK_API_KEY)
-
-if ai_ready:
-    print("[LUNA] DeepSeek API key terdeteksi. Model:", DEEPSEEK_MODEL)
+# Prioritas: Groq dulu (API key kamu), DeepSeek cadangan
+if GROQ_API_KEY:
+    AI_PROVIDER = "groq"
+    AI_API_KEY = GROQ_API_KEY
+    AI_BASE_URL = GROQ_BASE_URL
+    AI_MODEL = GROQ_MODEL
+    ai_ready = True
+    print("[LUNA] Pakai Groq | model:", AI_MODEL)
+elif DEEPSEEK_API_KEY:
+    AI_PROVIDER = "deepseek"
+    AI_API_KEY = DEEPSEEK_API_KEY
+    AI_BASE_URL = DEEPSEEK_BASE_URL
+    AI_MODEL = DEEPSEEK_MODEL
+    ai_ready = True
+    print("[LUNA] Pakai DeepSeek | model:", AI_MODEL)
 else:
-    print("[LUNA] DEEPSEEK_API_KEY belum tersedia — pakai template saja.")
+    AI_PROVIDER = None
+    AI_API_KEY = ""
+    AI_BASE_URL = ""
+    AI_MODEL = ""
+    ai_ready = False
+    print("[LUNA] Tidak ada API key — pakai template saja.")
+
+groq_client = None  # kompatibilitas nama lama
 
 
 LUNA_SYSTEM_PROMPT = """
@@ -733,14 +758,15 @@ def strip_model_thinking(text):
 
 
 def ask_luna(user_name, message, context="chat"):
-    if not DEEPSEEK_API_KEY:
-        print("[LUNA ERROR] DEEPSEEK_API_KEY kosong")
+    if not ai_ready or not AI_API_KEY:
+        print("[LUNA ERROR] API key kosong / ai tidak siap")
         return None
     try:
         if context == "chat":
             prompt = (
                 "Penonton " + str(user_name) + " bilang: " + str(message) + ". "
-                "Balas kocak pakai bahasa gaul keninian (boleh anjay/gas/buset). Maksimal 14 kata, 1 kalimat."
+                "Balas kocak pakai bahasa gaul keninian (boleh anjay/gas/buset). "
+                "Maksimal 14 kata, 1 kalimat."
             )
         elif context == "commentary":
             prompt = (
@@ -749,22 +775,26 @@ def ask_luna(user_name, message, context="chat"):
         else:
             prompt = str(message)
 
-        print("[LUNA] panggil DeepSeek model=" + str(DEEPSEEK_MODEL))
+        print("[LUNA] panggil", AI_PROVIDER, "model=" + str(AI_MODEL))
+
         payload = {
-            "model": DEEPSEEK_MODEL,
+            "model": AI_MODEL,
             "messages": [
                 {"role": "system", "content": LUNA_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
             "temperature": 0.8,
             "max_tokens": 80,
-            "thinking": {"type": "disabled"},
         }
+        # parameter khusus DeepSeek saja
+        if AI_PROVIDER == "deepseek":
+            payload["thinking"] = {"type": "disabled"}
+
         with httpx.Client(timeout=15.0) as client:
             resp = client.post(
-                DEEPSEEK_BASE_URL + "/chat/completions",
+                AI_BASE_URL + "/chat/completions",
                 headers={
-                    "Authorization": "Bearer " + DEEPSEEK_API_KEY,
+                    "Authorization": "Bearer " + AI_API_KEY,
                     "Content-Type": "application/json",
                 },
                 json=payload,
@@ -793,6 +823,7 @@ def ask_luna(user_name, message, context="chat"):
     except Exception as e:
         print("[LUNA ERROR] " + type(e).__name__ + ": " + str(e))
         return None
+
 
 
 LIKE_PROMOS = [
