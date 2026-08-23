@@ -352,11 +352,15 @@ def score_chat(user, text):
 
 
 def needs_ai(text, score):
-    if score >= 40:
+    if score >= 15:
         return True
-    if LUNA_MENTION_RE.search(text) and (QUESTION_RE.search(text) or RACE_Q_RE.search(text)):
+    if LUNA_MENTION_RE.search(text):
         return True
-    if RACE_Q_RE.search(text) and QUESTION_RE.search(text):
+    if QUESTION_RE.search(text) or "?" in text:
+        return True
+    if RACE_Q_RE.search(text):
+        return True
+    if score >= 5 and random.random() < 0.35:
         return True
     return False
 
@@ -1217,10 +1221,10 @@ def commentate_race(event, detail=""):
         "winner": f"Pemenang balapan: {detail or 'juara'}. Rayakan singkat.",
     }
 
-    # Bergantian: sering template (hemat), kadang AI
-    use_ai = False  # event game = template, 0 token AI
+    # 30% chance pakai AI untuk event balapan
+    use_ai = random.random() < 0.30
     reply = None
-    if False and use_ai:
+    if use_ai:
         prompt = prompt_map.get(event, f"Event balapan: {event}. {detail}")
         reply = ask_luna("LINTASAN", prompt, "race")
     if not reply:
