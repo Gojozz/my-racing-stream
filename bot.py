@@ -197,44 +197,43 @@ last_processed_race = None
 
 
 # =========================================================
-# LUNA AI
+# LUNA AI — DeepSeek V4 Flash (OpenAI-compatible)
 # =========================================================
 
+DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
+# fallback lama (opsional)
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
 
-GROQ_MODEL = os.environ.get(
-    "GROQ_MODEL",
-    "qwen/qwen3.6-27b"
+DEEPSEEK_BASE_URL = os.environ.get(
+    "DEEPSEEK_BASE_URL",
+    "https://api.deepseek.com"
+).rstrip("/")
+
+DEEPSEEK_MODEL = os.environ.get(
+    "DEEPSEEK_MODEL",
+    "deepseek-v4-flash"
 )
 
-groq_client = None
+# kompatibilitas nama lama di kode
+GROQ_MODEL = DEEPSEEK_MODEL
+groq_client = None  # diganti flag ai_ready
+ai_ready = bool(DEEPSEEK_API_KEY)
 
-if GROQ_API_KEY:
-    try:
-        groq_client = Groq(
-            api_key=GROQ_API_KEY,
-            timeout=15.0
-        )
-        print("[LUNA] Groq AI siap.")
-    except Exception as e:
-        print(f"[LUNA] Gagal membuat Groq client: {e}")
+if ai_ready:
+    print("[LUNA] DeepSeek API key terdeteksi. Model:", DEEPSEEK_MODEL)
 else:
-    print("[LUNA] GROQ_API_KEY belum tersedia.")
+    print("[LUNA] DEEPSEEK_API_KEY belum tersedia — pakai template saja.")
 
 
 LUNA_SYSTEM_PROMPT = """
-Kamu LUNA, komentator balap live yang cerewet, kocak, dan asal ngomong.
-Bahasa: Indonesia gaul, tidak baku, kayak temen nonton balap bareng.
-Boleh pakai: woy, gas, gila, buset, mantap, waduh, anjay (jangan kasar berlebih), auto, kepleset, ngebut.
-Gaya: komentator overreact, bikin seru, jangan kaku, jangan formal.
+Kamu LUNA, komentator balap live Indonesia.
+Gaya: energik, santai, family-friendly.
 Aturan:
-- Selalu bahasa Indonesia santai
-- Maksimal 1 kalimat pendek (max 16 kata)
-- Jangan bilang kamu AI/bot/model
+- Bahasa Indonesia
+- Maksimal 1 kalimat, maksimal 14 kata
+- Jangan bilang kamu AI/bot
 - Jangan menghina penonton
-- Kalau balas chat: sebut nama singkat, langsung lucu
-- Kalau komentar balap: seolah lihat mobil ngebut di lintasan
-- PENTING: Jangan keluarkan thinking process terlalu panjang. Langsung jawab 1 kalimat pendek saja.
+- Langsung jawaban, tanpa thinking
 """
 
 
@@ -267,6 +266,191 @@ CHAT_BUSY_WINDOW = 20.0   # detik
 CHAT_BUSY_THRESHOLD = 6   # jumlah chat dalam window = rame
 CHAT_REPLY_CHANCE_BUSY = 0.28
 CHAT_REPLY_CHANCE_NORMAL = 0.75
+
+# =========================================================
+# LUNA SMART FILTER + QUEUE + PRIORITY
+# =========================================================
+LUNA_GAP_MIN = 3.0
+LUNA_GAP_MAX = 5.0
+last_luna_speak_at = 0.0
+chat_priority_queue = []
+CHAT_QUEUE_MAX = 40
+last_seen_msgs = {}
+TOPIC_BUCKETS = {}
+
+SIMPLE_CHAT_RE = re.compile(
+    r"^(hai|halo|hi|hello|wkwk+|wk+|lol|haha+|gas+|mantap+|ok|oke|sip|gg|ez|nice|bang|bro|kak)+[\s!.,]*$",
+    re.I,
+)
+EMOJI_ONLY_RE = re.compile(r"^[\s\W_]+$", re.UNICODE)
+LUNA_MENTION_RE = re.compile(r"\b(luna|lunaa)\b", re.I)
+RACE_Q_RE = re.compile(
+    r"(siapa\s+(yang\s+)?(menang|juara|depan|p1)|posisi|klasemen|overtake|nyalip|finish|balapan|mobil|lap\b)",
+    re.I,
+)
+QUESTION_RE = re.compile(r"\?|^(apa|siapa|kenapa|kok|gimana|bagaimana|kapan|dimana|berapa)\b", re.I)
+
+
+def normalize_chat(text):
+    t = str(text or "").lower().strip()
+    t = re.sub(r"https?://\S+", "", t)
+    t = re.sub(r"@\w+", "", t)
+    t = re.sub(r"(.)\1{2,}", r"\1\1", t)
+    t = re.sub(r"[^\w\s\?]", " ", t, flags=re.UNICODE)
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+def is_spam_or_dup(user, text):
+    global last_seen_msgs
+    now = time.time()
+    for k in list(last_seen_msgs.keys()):
+        if now - last_seen_msgs[k] > 45:
+            del last_seen_msgs[k]
+    norm = normalize_chat(text)
+    if not norm or len(norm) < 2:
+        return True
+    if len(re.sub(r"\W", "", text, flags=re.UNICODE)) == 0:
+        return True
+    key = norm
+    ukey = user.lower() + "|" + norm
+    if key in last_seen_msgs and (now - last_seen_msgs[key]) < 25:
+        return True
+    if ukey in last_seen_msgs and (now - last_seen_msgs[ukey]) < 40:
+        return True
+    last_seen_msgs[key] = now
+    last_seen_msgs[ukey] = now
+    return False
+
+
+def topic_key(text):
+    norm = normalize_chat(text)
+    words = [w for w in norm.split() if len(w) > 2][:4]
+    return " ".join(words) if words else norm[:24]
+
+
+def score_chat(user, text):
+    t = text.strip()
+    norm = normalize_chat(t)
+    score = 0
+    if LUNA_MENTION_RE.search(t):
+        score += 50
+    if QUESTION_RE.search(t) or "?" in t:
+        score += 35
+    if RACE_Q_RE.search(t):
+        score += 40
+    if SIMPLE_CHAT_RE.match(norm):
+        score -= 30
+    if 8 <= len(norm) <= 120:
+        score += 10
+    if len(norm) > 160:
+        score -= 20
+    return score
+
+
+def needs_ai(text, score):
+    if score >= 40:
+        return True
+    if LUNA_MENTION_RE.search(text) and (QUESTION_RE.search(text) or RACE_Q_RE.search(text)):
+        return True
+    if RACE_Q_RE.search(text) and QUESTION_RE.search(text):
+        return True
+    return False
+
+
+def simple_template_reply(user, text):
+    name = str(user).split()[0][:12]
+    norm = normalize_chat(text)
+    if SIMPLE_CHAT_RE.match(norm):
+        return random.choice([
+            f"Gas {name}, tetap di sini ya!",
+            f"Halo {name}, balapan lagi panas!",
+            f"Siap {name}, nonton bareng yuk!",
+        ])
+    return random.choice([
+        f"Mantap {name}, komentarnya nyampe!",
+        f"Oke {name}, Luna catat!",
+        f"Gas terus {name}!",
+    ])
+
+
+def enqueue_chat(user, text):
+    global chat_priority_queue, TOPIC_BUCKETS
+    now = time.time()
+    for k in list(TOPIC_BUCKETS.keys()):
+        if now - TOPIC_BUCKETS[k]["ts"] > 60:
+            del TOPIC_BUCKETS[k]
+    sc = score_chat(user, text)
+    tk = topic_key(text)
+    if tk in TOPIC_BUCKETS:
+        b = TOPIC_BUCKETS[tk]
+        b["count"] += 1
+        b["score"] = min(100, max(b["score"], sc) + 3)
+        b["ts"] = now
+        return
+    TOPIC_BUCKETS[tk] = {
+        "count": 1,
+        "sample_user": user,
+        "sample_text": text.strip()[:180],
+        "score": sc,
+        "ts": now,
+    }
+    chat_priority_queue.append({
+        "user": user,
+        "text": text.strip()[:180],
+        "score": sc,
+        "ts": now,
+        "topic": tk,
+    })
+    chat_priority_queue.sort(key=lambda x: (-x["score"], x["ts"]))
+    if len(chat_priority_queue) > CHAT_QUEUE_MAX:
+        chat_priority_queue[:] = chat_priority_queue[:CHAT_QUEUE_MAX]
+
+
+def pop_best_chat():
+    global chat_priority_queue
+    if not chat_priority_queue:
+        return None
+    chat_priority_queue.sort(key=lambda x: (-x["score"], x["ts"]))
+    return chat_priority_queue.pop(0)
+
+
+def luna_can_speak():
+    return (time.time() - last_luna_speak_at) >= LUNA_GAP_MIN
+
+
+def mark_luna_spoke():
+    global last_luna_speak_at
+    last_luna_speak_at = time.time() + random.uniform(0, LUNA_GAP_MAX - LUNA_GAP_MIN)
+
+
+def process_chat_queue_once(race_state_hint=""):
+    if not luna_can_speak():
+        return
+    item = pop_best_chat()
+    if not item:
+        return
+    user = item["user"]
+    msg = item["text"]
+    sc = item["score"]
+    meta = TOPIC_BUCKETS.get(item.get("topic"), {})
+    count = int(meta.get("count", 1))
+    if not needs_ai(msg, sc):
+        reply = simple_template_reply(user, msg)
+        print(f"[LUNA TEMPLATE] {user}: {msg} -> {reply}")
+        speak(reply)
+        mark_luna_spoke()
+        return
+    context_line = race_state_hint.strip() or "Balapan sedang berlangsung."
+    prompt_msg = f"(x{count} penonton sejenis) {msg}" if count > 1 else msg
+    reply = ask_luna(user, f"[{context_line}] {prompt_msg}", "chat")
+    if not reply:
+        reply = simple_template_reply(user, msg)
+        print("[LUNA] AI gagal, fallback template")
+    print(f"[LUNA AI] score={sc} {user}: {msg} -> {reply}")
+    speak(reply)
+    mark_luna_spoke()
+
 
 
 ENGAGEMENT_INTERVAL = 90
@@ -544,63 +728,66 @@ def strip_model_thinking(text):
 
 
 def ask_luna(user_name, message, context="chat"):
-
-    if not groq_client:
-        print("[LUNA ERROR] groq_client kosong")
+    if not DEEPSEEK_API_KEY:
+        print("[LUNA ERROR] DEEPSEEK_API_KEY kosong")
         return None
-
     try:
         if context == "chat":
             prompt = (
                 "Penonton " + str(user_name) + " bilang: " + str(message) + ". "
-                "Balas singkat ala komentator balap yang kocak. "
-                "Sebut namanya, boleh nyambung soal balapan. "
-                "Langsung jawab 1 kalimat saja, jangan thinking panjang."
+                "Balas singkat. Maksimal 14 kata, 1 kalimat."
             )
         elif context == "commentary":
             prompt = (
-                "Kasih 1 kalimat komentar balap yang overreact dan kocak, "
-                "seolah mobil lagi ngebut di sirkuit. Langsung jawab saja."
+                "Kasih 1 kalimat komentar balap singkat, maksimal 14 kata."
             )
         else:
             prompt = str(message)
 
-        print("[LUNA] panggil Groq model=" + str(GROQ_MODEL))
-
-        response = groq_client.chat.completions.create(
-            model=GROQ_MODEL,
-            messages=[
+        print("[LUNA] panggil DeepSeek model=" + str(DEEPSEEK_MODEL))
+        payload = {
+            "model": DEEPSEEK_MODEL,
+            "messages": [
                 {"role": "system", "content": LUNA_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.85,
-            max_tokens=450,
-        )
-
-        choice = response.choices[0].message
-        raw = getattr(choice, "content", None)
+            "temperature": 0.8,
+            "max_tokens": 80,
+            "thinking": {"type": "disabled"},
+        }
+        with httpx.Client(timeout=15.0) as client:
+            resp = client.post(
+                DEEPSEEK_BASE_URL + "/chat/completions",
+                headers={
+                    "Authorization": "Bearer " + DEEPSEEK_API_KEY,
+                    "Content-Type": "application/json",
+                },
+                json=payload,
+            )
+        if resp.status_code >= 400:
+            print("[LUNA ERROR] HTTP", resp.status_code, resp.text[:300])
+            return None
+        data = resp.json()
+        raw = data["choices"][0]["message"].get("content")
         print("[LUNA RAW] " + repr(raw)[:500])
-
         if not raw or not str(raw).strip():
             print("[LUNA ERROR] response content kosong")
             return None
-
-        text = clean_tts_text(strip_model_thinking(str(raw)))
-        text = " ".join(text.split())
-        if len(text) > 160:
-            text = text[:160].rsplit(" ", 1)[0]
-
-        if not text:
+        text_out = clean_tts_text(strip_model_thinking(str(raw)))
+        text_out = " ".join(text_out.split())
+        words = text_out.split()
+        if len(words) > 14:
+            text_out = " ".join(words[:14])
+        if len(text_out) > 160:
+            text_out = text_out[:160].rsplit(" ", 1)[0]
+        if not text_out:
             print("[LUNA ERROR] text kosong setelah clean")
             return None
-
-        print("[LUNA CLEAN] " + text)
-        return text
-
+        print("[LUNA CLEAN] " + text_out)
+        return text_out
     except Exception as e:
         print("[LUNA ERROR] " + type(e).__name__ + ": " + str(e))
         return None
-
 
 
 LIKE_PROMOS = [
@@ -1027,11 +1214,9 @@ def commentate_race(event, detail=""):
     }
 
     # Bergantian: sering template (hemat), kadang AI
-    use_ai = bool(groq_client) and (
-        event in ("winner", "start") or random.random() < 0.30
-    )
+    use_ai = False  # event game = template, 0 token AI
     reply = None
-    if use_ai:
+    if False and use_ai:
         prompt = prompt_map.get(event, f"Event balapan: {event}. {detail}")
         reply = ask_luna("LINTASAN", prompt, "race")
     if not reply:
@@ -1537,64 +1722,29 @@ def start_bot():
                 if raw_msg:
 
                     now = time.time()
-
-                    # catat traffic chat
                     recent_chat_times.append(now)
                     while recent_chat_times and (now - recent_chat_times[0]) > CHAT_BUSY_WINDOW:
                         recent_chat_times.pop(0)
 
-                    last_user_time = (
-                        last_chat_response
-                        .get(user.lower(), 0)
-                    )
+                    if is_spam_or_dup(user, raw_msg):
+                        print(f"[CHAT SPAM] {user}: {raw_msg}")
+                        process_chat_queue_once()
+                        continue
 
-                    if (
-                        now - last_user_time
-                        >= CHAT_COOLDOWN
-                    ):
+                    if len(raw_msg) > 180:
+                        process_chat_queue_once()
+                        continue
 
-                        # Abaikan chat terlalu panjang
-                        if len(raw_msg) <= 180:
+                    last_user_time = last_chat_response.get(user.lower(), 0)
+                    if now - last_user_time < CHAT_COOLDOWN:
+                        process_chat_queue_once()
+                        continue
 
-                            busy = len(recent_chat_times) >= CHAT_BUSY_THRESHOLD
-                            chance = CHAT_REPLY_CHANCE_BUSY if busy else CHAT_REPLY_CHANCE_NORMAL
-
-                            # Saat rame: pilih random chat yang dibalas
-                            if random.random() > chance:
-                                print(f"[CHAT SKIP] {user}: {raw_msg} (rame={busy})")
-                                continue
-
-                            print(
-                                f"[CHAT IN] {user}: {raw_msg} (rame={busy})"
-                            )
-
-                            reply = None
-
-                            if groq_client:
-                                reply = ask_luna(
-                                    user,
-                                    raw_msg,
-                                    "chat"
-                                )
-
-                            # Fallback kalau Groq kosong/gagal
-                            if not reply:
-                                reply = random.choice([
-                                    f"Woy {user}, gas terus komentarnya!",
-                                    f"{user} nyolot di komentar, LUNA denger nih!",
-                                    f"Mantap {user}, komentarnya nambah seru!",
-                                    f"Siap {user}, LUNA catat di kepala!",
-                                    f"Kocak {user}, jangan berhenti komen!",
-                                ])
-                                print("[LUNA] fallback tanpa Groq")
-
-                            print(f"[LUNA CHAT] {user}: {raw_msg}")
-                            print(f"[LUNA] {reply}")
-                            speak(reply)
-
-                            last_chat_response[
-                                user.lower()
-                            ] = now
+                    last_chat_response[user.lower()] = now
+                    sc = score_chat(user, raw_msg)
+                    print(f"[CHAT IN] {user}: {raw_msg} score={sc}")
+                    enqueue_chat(user, raw_msg)
+                    process_chat_queue_once()
 
         except Exception as e:
 
