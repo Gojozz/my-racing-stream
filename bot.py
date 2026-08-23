@@ -197,55 +197,28 @@ last_processed_race = None
 
 
 # =========================================================
-# LUNA AI — Groq (utama) + DeepSeek (opsional fallback)
+# LUNA AI — LOCAL LLAMA.CPP
 # =========================================================
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
-DEEPSEEK_API_KEY = os.environ.get("DEEPSEEK_API_KEY", "").strip()
-
-GROQ_BASE_URL = os.environ.get(
-    "GROQ_BASE_URL",
-    "https://api.groq.com/openai/v1"
+# llama-server menyediakan OpenAI-compatible API di localhost.
+LOCAL_LUNA_URL = os.environ.get(
+    "LOCAL_LUNA_URL",
+    "http://127.0.0.1:8080/v1"
 ).rstrip("/")
 
-# Model Groq yang umum tersedia (gratis / cepat)
-GROQ_MODEL = os.environ.get(
-    "GROQ_MODEL",
-    "llama-3.1-8b-instant"
+LOCAL_LUNA_MODEL = os.environ.get(
+    "LOCAL_LUNA_MODEL",
+    "Qwen3-1.7B-Q4_K_M"
 )
 
-DEEPSEEK_BASE_URL = os.environ.get(
-    "DEEPSEEK_BASE_URL",
-    "https://api.deepseek.com"
-).rstrip("/")
+AI_PROVIDER = "local-llama"
+AI_API_KEY = ""
+AI_BASE_URL = LOCAL_LUNA_URL
+AI_MODEL = LOCAL_LUNA_MODEL
+ai_ready = True
 
-DEEPSEEK_MODEL = os.environ.get(
-    "DEEPSEEK_MODEL",
-    "deepseek-v4-flash"
-)
-
-# Prioritas: Groq dulu (API key kamu), DeepSeek cadangan
-if GROQ_API_KEY:
-    AI_PROVIDER = "groq"
-    AI_API_KEY = GROQ_API_KEY
-    AI_BASE_URL = GROQ_BASE_URL
-    AI_MODEL = GROQ_MODEL
-    ai_ready = True
-    print("[LUNA] Pakai Groq | model:", AI_MODEL)
-elif DEEPSEEK_API_KEY:
-    AI_PROVIDER = "deepseek"
-    AI_API_KEY = DEEPSEEK_API_KEY
-    AI_BASE_URL = DEEPSEEK_BASE_URL
-    AI_MODEL = DEEPSEEK_MODEL
-    ai_ready = True
-    print("[LUNA] Pakai DeepSeek | model:", AI_MODEL)
-else:
-    AI_PROVIDER = None
-    AI_API_KEY = ""
-    AI_BASE_URL = ""
-    AI_MODEL = ""
-    ai_ready = False
-    print("[LUNA] Tidak ada API key — pakai template saja.")
+print("[LUNA] Pakai LOCAL LLAMA.CPP | model:", AI_MODEL)
+print("[LUNA] Endpoint:", AI_BASE_URL)
 
 groq_client = None  # kompatibilitas nama lama
 
@@ -758,8 +731,8 @@ def strip_model_thinking(text):
 
 
 def ask_luna(user_name, message, context="chat"):
-    if not ai_ready or not AI_API_KEY:
-        print("[LUNA ERROR] API key kosong / ai tidak siap")
+    if not ai_ready:
+        print("[LUNA ERROR] AI lokal tidak siap")
         return None
     try:
         if context == "chat":
@@ -786,15 +759,10 @@ def ask_luna(user_name, message, context="chat"):
             "temperature": 0.8,
             "max_tokens": 80,
         }
-        # parameter khusus DeepSeek saja
-        if AI_PROVIDER == "deepseek":
-            payload["thinking"] = {"type": "disabled"}
-
         with httpx.Client(timeout=15.0) as client:
             resp = client.post(
                 AI_BASE_URL + "/chat/completions",
                 headers={
-                    "Authorization": "Bearer " + AI_API_KEY,
                     "Content-Type": "application/json",
                 },
                 json=payload,
