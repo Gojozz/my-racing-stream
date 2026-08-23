@@ -77,6 +77,12 @@ jobs:
           pactl get-sink-volume stream_sink
           pactl get-sink-mute stream_sink
 
+      - name: Start Local Luna AI
+        run: |
+          echo "===== START LOCAL LUNA AI ====="
+          chmod +x .github/workflows/luna-local-test.sh
+          .github/workflows/luna-local-test.sh
+
       - name: Start Chat Bot
         env:
           YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
