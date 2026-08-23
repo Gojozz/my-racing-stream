@@ -197,30 +197,36 @@ last_processed_race = None
 
 
 # =========================================================
-# LUNA AI — LOCAL LLAMA.CPP
+# LUNA AI — Groq allam-2-7b
 # =========================================================
 
-# llama-server menyediakan OpenAI-compatible API di localhost.
-LOCAL_LUNA_URL = os.environ.get(
-    "LOCAL_LUNA_URL",
-    "http://127.0.0.1:8080/v1"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
+DEEPSEEK_API_KEY = GROQ_API_KEY
+
+DEEPSEEK_BASE_URL = os.environ.get(
+    "DEEPSEEK_BASE_URL",
+    "https://api.groq.com/openai/v1"
 ).rstrip("/")
 
-LOCAL_LUNA_MODEL = os.environ.get(
-    "LOCAL_LUNA_MODEL",
-    "Qwen3-1.7B-Q4_K_M"
+DEEPSEEK_MODEL = os.environ.get(
+    "DEEPSEEK_MODEL",
+    "allam-2-7b"
 )
 
-AI_PROVIDER = "local-llama"
-AI_API_KEY = ""
-AI_BASE_URL = LOCAL_LUNA_URL
-AI_MODEL = LOCAL_LUNA_MODEL
-ai_ready = True
+AI_PROVIDER = "groq"
+AI_API_KEY = GROQ_API_KEY
+AI_BASE_URL = DEEPSEEK_BASE_URL
+AI_MODEL = DEEPSEEK_MODEL
+ai_ready = bool(GROQ_API_KEY)
 
-print("[LUNA] Pakai LOCAL LLAMA.CPP | model:", AI_MODEL)
-print("[LUNA] Endpoint:", AI_BASE_URL)
+if ai_ready:
+    print("[LUNA] Groq siap. Model:", AI_MODEL)
+    print("[LUNA] Endpoint:", AI_BASE_URL)
+else:
+    print("[LUNA] GROQ_API_KEY kosong — pakai template saja.")
 
-groq_client = None  # kompatibilitas nama lama
+groq_client = None
+
 
 
 LUNA_SYSTEM_PROMPT = """
