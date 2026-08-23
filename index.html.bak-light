@@ -412,12 +412,12 @@ let raceResetTimer = null;
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x5ba3d9);  // langit biru
+scene.background = new THREE.Color(0x3a6a9a);  // langit lebih gelap
 
 scene.fog = new THREE.Fog(
-    0x87b8d8,
-    160,
-    650
+    0x4a7aaa,   // kabut lebih gelap
+    140,
+    600
 );
 
 
@@ -471,7 +471,7 @@ renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.72;
+renderer.toneMappingExposure = 0.62;
 
 document.body.appendChild(
     renderer.domElement
@@ -484,16 +484,19 @@ document.body.appendChild(
 
 const hemiLight =
     new THREE.HemisphereLight(
-        0xe8b898,   // langit senja
-        0x2a1a28,   // tanah
-        0.48
+        0xffb38a,   // langit senja hangat
+        0x2a1a28,   // tanah gelap
+        0.40
     );
 
 scene.add(hemiLight);
 
 
 const sunLight =
-    new THREE.DirectionalLight(0xff8a55, 0.55);
+    new THREE.DirectionalLight(
+        0xff8a55,   // matahari senja
+        0.38        // lebih rendah biar cat mobil tidak kebanjiran cahaya
+    );
 
 sunLight.position.set(
     -120,
@@ -502,7 +505,7 @@ sunLight.position.set(
 );
 
 // Cahaya isi dari sisi berlawanan (mengurangi bayangan hitam + silau)
-const fillLight = new THREE.DirectionalLight(0x6a4a7a, 0.28);
+const fillLight = new THREE.DirectionalLight(0x6a4a7a, 0.18);
 fillLight.position.set(100, 40, 80);
 scene.add(fillLight);
 
@@ -545,7 +548,7 @@ scene.add(ground);
 function createCloud() {
     const group = new THREE.Group();
     const mat = new THREE.MeshLambertMaterial({
-        color: 0xc49a7a,   // awan lebih redup
+        color: 0xffc9a8,   // awan berwarna hangat
         transparent: true,
         opacity: 0.82
     });
@@ -598,14 +601,14 @@ function createTree() {
     // Batang
     const trunk = new THREE.Mesh(
         new THREE.CylinderGeometry(0.35, 0.5, 4.5, 6),
-        new THREE.MeshLambertMaterial({ color: 0x3d2818 })
+        new THREE.MeshLambertMaterial({ color: 0x5c3a21 })
     );
     trunk.position.y = 2.2;
     trunk.castShadow = true;
     group.add(trunk);
 
     // Daun (beberapa bola)
-    const leafMat = new THREE.MeshLambertMaterial({ color: 0x1a4a2a });
+    const leafMat = new THREE.MeshLambertMaterial({ color: 0x2d6a3e });
     const leafPositions = [
         [0, 5.2, 0],
         [1.3, 4.6, 0.8],
@@ -887,8 +890,8 @@ function createRoad() {
     geometry.computeBoundingSphere();
 
     const material =
-        new THREE.MeshBasicMaterial({
-            color: 0x808080,
+        new THREE.MeshLambertMaterial({
+            color: 0x666666,
             side: THREE.DoubleSide
         });
 
@@ -898,7 +901,7 @@ function createRoad() {
             material
         );
 
-    mesh.receiveShadow = false;
+    mesh.receiveShadow = true;
 
     scene.add(mesh);
 
@@ -1441,10 +1444,9 @@ function createBuilding(height, width, depth) {
     const buildingMat =
         new THREE.MeshStandardMaterial({
             color:
-                0x4a5560 +
-                Math.floor(Math.random() * 4) * 0x030303,
-            roughness: 0.92,
-            metalness: 0.05
+                0x7a8794 +
+                Math.floor(Math.random() * 5) * 0x050505,
+            roughness: 0.9
         });
 
     const building = new THREE.Mesh(
@@ -1607,70 +1609,98 @@ const CAR_MODELS = [
     { url: "assets/rover.glb",   name: "Maya",   color: "#ff2d95", hex: 0xff2d95, scale: 1.274,  y: 2.2 }
 ];
 
-function tintCarMesh(root, colorHex, modelUrl) {
-    // Hanya GTR & Rover: kaca dibuat hitam. Mobil lain = warna asli aset.
-    const url = String(modelUrl || "").toLowerCase();
-    const blackGlassOnly = url.includes("gtr") || url.includes("rover");
+function tintCarMesh(root, colorHex) {
+    const skipKeys = [
+        "glass", "window", "light", "lamp", "headlight", "taillight",
+        "tail", "brake", "emit", "emission", "led", "wheel", "tire",
+        "tyre", "rim", "chrome", "mirror", "disc", "rotor", "caliper",
+        "interior", "cabin", "seat"
+    ];
 
     root.traverse(obj => {
-        if (!obj.isMesh) return;
-        obj.castShadow = true;
-        obj.receiveShadow = true;
-
-        if (!blackGlassOnly || !obj.material) return;
+        if (!obj.isMesh || !obj.material) return;
 
         const meshName = (obj.name || "").toLowerCase();
         const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
 
-        let isGlass =
-            meshName.includes("glass") ||
-            meshName.includes("window") ||
-            meshName.includes("kaca") ||
-            meshName.includes("windshield") ||
-            meshName.includes("windscreen") ||
-            meshName.includes("canopy") ||
-            meshName.includes("screen");
+        let skip = skipKeys.some(k => meshName.includes(k));
 
-        if (!isGlass) {
+        if (!skip) {
             for (const m of mats) {
                 const matName = (m.name || "").toLowerCase();
-                if (
-                    matName.includes("glass") ||
-                    matName.includes("window") ||
-                    matName.includes("kaca") ||
-                    matName.includes("transparent")
-                ) {
-                    isGlass = true;
+                if (skipKeys.some(k => matName.includes(k))) {
+                    skip = true;
                     break;
                 }
-                // material transparan di GLB biasanya kaca
-                if (m.transparent === true && (m.opacity === undefined || m.opacity < 0.98)) {
-                    isGlass = true;
-                    break;
+                // material emissive (lampu merah/oranye/putih) jangan diubah
+                if (m.emissive) {
+                    const e = m.emissive;
+                    if (e.r > 0.12 || e.g > 0.12 || e.b > 0.12) {
+                        skip = true;
+                        break;
+                    }
                 }
             }
         }
 
-        if (!isGlass) return;
+        // kaca: gelap transparan
+        const isGlass =
+            meshName.includes("glass") ||
+            meshName.includes("window") ||
+            mats.some(m => {
+                const n = (m.name || "").toLowerCase();
+                return n.includes("glass") || n.includes("window");
+            });
 
-        obj.material = new THREE.MeshStandardMaterial({
-            color: 0x0a0a0a,
-            metalness: 0.35,
-            roughness: 0.12,
-            transparent: true,
-            opacity: 0.88
+        if (isGlass) {
+            obj.material = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                metalness: 0.15,
+                roughness: 0.25,
+                transparent: true,
+                opacity: 0.7
+            });
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+            return;
+        }
+
+        // lampu / roda / chrome: biarkan material asli GLB
+        if (skip) {
+            obj.castShadow = true;
+            obj.receiveShadow = true;
+            return;
+        }
+
+        // HANYA body panel: warnai + matte ringan (tidak kusam berlebih)
+        mats.forEach((m, idx) => {
+            const mat = m.clone();
+            if (mat.color) mat.color.setHex(colorHex);
+            if (mat.metalness !== undefined) mat.metalness = 0.12;
+            if (mat.roughness !== undefined) mat.roughness = 0.78;
+            // jangan paksa emissive hitam di body saja (aman)
+            if (mat.emissive) mat.emissive.setHex(0x000000);
+            mat.needsUpdate = true;
+            if (Array.isArray(obj.material)) {
+                obj.material[idx] = mat;
+            } else {
+                obj.material = mat;
+            }
         });
+
+        obj.castShadow = true;
+        obj.receiveShadow = true;
     });
 }
+
 
 function createCarMesh(template, conf) {
     const car = template.clone(true);
     car.scale.setScalar(conf.scale);
     car.position.y = conf.y;
-    tintCarMesh(car, conf.hex, conf.url);
+    tintCarMesh(car, conf.hex);
     return car;
 }
-
 
 function buildCars(templates) {
     cars.forEach(c => { if (c.mesh) scene.remove(c.mesh); });

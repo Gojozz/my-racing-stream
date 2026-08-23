@@ -1607,70 +1607,23 @@ const CAR_MODELS = [
     { url: "assets/rover.glb",   name: "Maya",   color: "#ff2d95", hex: 0xff2d95, scale: 1.274,  y: 2.2 }
 ];
 
-function tintCarMesh(root, colorHex, modelUrl) {
-    // Hanya GTR & Rover: kaca dibuat hitam. Mobil lain = warna asli aset.
-    const url = String(modelUrl || "").toLowerCase();
-    const blackGlassOnly = url.includes("gtr") || url.includes("rover");
-
+function tintCarMesh(root, colorHex) {
+    // Warna asli dari aset GLB — tidak di-tint / tidak diubah material
     root.traverse(obj => {
         if (!obj.isMesh) return;
         obj.castShadow = true;
         obj.receiveShadow = true;
-
-        if (!blackGlassOnly || !obj.material) return;
-
-        const meshName = (obj.name || "").toLowerCase();
-        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
-
-        let isGlass =
-            meshName.includes("glass") ||
-            meshName.includes("window") ||
-            meshName.includes("kaca") ||
-            meshName.includes("windshield") ||
-            meshName.includes("windscreen") ||
-            meshName.includes("canopy") ||
-            meshName.includes("screen");
-
-        if (!isGlass) {
-            for (const m of mats) {
-                const matName = (m.name || "").toLowerCase();
-                if (
-                    matName.includes("glass") ||
-                    matName.includes("window") ||
-                    matName.includes("kaca") ||
-                    matName.includes("transparent")
-                ) {
-                    isGlass = true;
-                    break;
-                }
-                // material transparan di GLB biasanya kaca
-                if (m.transparent === true && (m.opacity === undefined || m.opacity < 0.98)) {
-                    isGlass = true;
-                    break;
-                }
-            }
-        }
-
-        if (!isGlass) return;
-
-        obj.material = new THREE.MeshStandardMaterial({
-            color: 0x0a0a0a,
-            metalness: 0.35,
-            roughness: 0.12,
-            transparent: true,
-            opacity: 0.88
-        });
     });
 }
+
 
 function createCarMesh(template, conf) {
     const car = template.clone(true);
     car.scale.setScalar(conf.scale);
     car.position.y = conf.y;
-    tintCarMesh(car, conf.hex, conf.url);
+    tintCarMesh(car, conf.hex);
     return car;
 }
-
 
 function buildCars(templates) {
     cars.forEach(c => { if (c.mesh) scene.remove(c.mesh); });
