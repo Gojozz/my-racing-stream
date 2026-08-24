@@ -268,7 +268,7 @@ tts_lock = threading.Lock()
 
 last_tts_time = 0.0
 
-CHAT_COOLDOWN = 4.0
+CHAT_COOLDOWN = 2.0
 
 last_chat_response = {}
 
@@ -282,8 +282,8 @@ CHAT_REPLY_CHANCE_NORMAL = 0.75
 # =========================================================
 # LUNA SMART FILTER + QUEUE + PRIORITY
 # =========================================================
-LUNA_GAP_MIN = 3.0
-LUNA_GAP_MAX = 5.0
+LUNA_GAP_MIN = 2.0
+LUNA_GAP_MAX = 3.5
 last_luna_speak_at = 0.0
 chat_priority_queue = []
 CHAT_QUEUE_MAX = 40
@@ -317,7 +317,7 @@ def is_spam_or_dup(user, text):
     global last_seen_msgs
     now = time.time()
     for k in list(last_seen_msgs.keys()):
-        if now - last_seen_msgs[k] > 45:
+        if now - last_seen_msgs[k] > 20:
             del last_seen_msgs[k]
     norm = normalize_chat(text)
     if not norm or len(norm) < 2:
@@ -326,9 +326,9 @@ def is_spam_or_dup(user, text):
         return True
     key = norm
     ukey = user.lower() + "|" + norm
-    if key in last_seen_msgs and (now - last_seen_msgs[key]) < 25:
+    if key in last_seen_msgs and (now - last_seen_msgs[key]) < 8:
         return True
-    if ukey in last_seen_msgs and (now - last_seen_msgs[ukey]) < 40:
+    if ukey in last_seen_msgs and (now - last_seen_msgs[ukey]) < 12:
         return True
     last_seen_msgs[key] = now
     last_seen_msgs[ukey] = now
@@ -469,7 +469,7 @@ def process_chat_queue_once(race_state_hint=""):
 
 
 
-ENGAGEMENT_INTERVAL = 180
+ENGAGEMENT_INTERVAL = 240
 
 last_engagement_time = time.time() - 10000
 
@@ -847,8 +847,12 @@ def engagement_loop():
             # 0 = like/subscribe/share
             # 1 = join
 
+            # Jangan saingi balasan chat (prioritas Luna chat)
+            if time.time() - last_luna_speak_at < 12:
+                print("[ENGAGEMENT] skip — Luna baru bicara")
+                continue
+
             text = pick_engagement_line()
-            # engagement_index di dalam helper
 
             print(
                 f"[ENGAGEMENT] {text}"
