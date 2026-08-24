@@ -1522,6 +1522,27 @@ def create_chat_with_retry(
 # MAIN BOT
 # =========================================================
 
+
+def fetch_chat_items(chat):
+    """Kompatibel pytchat: get() bisa object ATAU list."""
+    try:
+        raw = chat.get()
+    except Exception as e:
+        print(f"[CHAT] get() error: {e}")
+        return None
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return raw
+    if hasattr(raw, "sync_items"):
+        try:
+            return raw.sync_items() or []
+        except Exception as e:
+            print(f"[CHAT] sync_items error: {e}")
+            return None
+    return []
+
+
 def start_bot():
 
     global VIDEO_ID
@@ -1640,6 +1661,7 @@ def start_bot():
     print("====================================")
 
     # ===== Chat loop gaya syc (sederhana + stabil) =====
+    # ===== Chat loop gaya syc (sederhana + get aman) =====
     while True:
 
         try:
@@ -1674,19 +1696,8 @@ def start_bot():
 
                 continue
 
-            # get() bisa list ATAU object (perbaikan racing)
-            try:
-                _raw = chat.get()
-                if _raw is None:
-                    items = []
-                elif isinstance(_raw, list):
-                    items = _raw
-                elif hasattr(_raw, "sync_items"):
-                    items = _raw.sync_items() or []
-                else:
-                    items = list(_raw) if _raw else []
-            except Exception as e:
-                print(f"[CHAT] get() error: {e}")
+            items = fetch_chat_items(chat)
+            if items is None:
                 time.sleep(2)
                 continue
 
