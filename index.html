@@ -1742,6 +1742,40 @@ async function loadChatState() {
 
         updateChatPanels(active, queue);
 
+        // =========================================
+        // PLAYER GAME CONTROLS
+        // =========================================
+        active.slice(0, 5).forEach((player, index) => {
+            const car = cars[index];
+            if (!car) return;
+
+            const controlId = Number(player.controlId || 0);
+
+            if (
+                controlId &&
+                controlId !== (car.lastControlId || 0)
+            ) {
+                car.lastControlId = controlId;
+
+                const control = player.control;
+
+                if (control === "nitro") {
+                    car.nitroTimer = 2.5;
+                    console.log("[NITRO]", car.name);
+                }
+
+                if (control === "stop") {
+                    car.manualStop = true;
+                    console.log("[STOP]", car.name);
+                }
+
+                if (control === "gas") {
+                    car.manualStop = false;
+                    console.log("[GAS]", car.name);
+                }
+            }
+        });
+
         pendingChatPlayers = active
             .slice(0, 5)
             .map(p => p.name || p.user)
@@ -1984,8 +2018,29 @@ function animate() {
                     )
                 );
 
-            const currentSpeed =
-                car.aiSpeed;
+            // =========================================
+            // PLAYER CONTROL
+            // =========================================
+            if (car.nitroTimer === undefined) {
+                car.nitroTimer = 0;
+            }
+
+            if (car.manualStop === undefined) {
+                car.manualStop = false;
+            }
+
+            car.nitroTimer = Math.max(
+                0,
+                car.nitroTimer - deltaSeconds
+            );
+
+            let currentSpeed = car.aiSpeed;
+
+            if (car.manualStop) {
+                currentSpeed = 0;
+            } else if (car.nitroTimer > 0) {
+                currentSpeed *= 2.2;
+            }
 
             const distanceThisFrame =
                 raceStarted ? (currentSpeed * frameFactor) : 0;

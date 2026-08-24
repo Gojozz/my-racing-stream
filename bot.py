@@ -695,7 +695,10 @@ def add_player(state, user):
     player = {
         "user": user,
         "name": user,
-        "joinedAt": time.time()
+        "joinedAt": time.time(),
+        "control": None,
+        "controlAt": 0,
+        "controlId": 0
     }
 
     if len(state["active"]) < MAX_PLAYERS:
@@ -1498,6 +1501,54 @@ def start_bot():
                 ).strip()
 
                 msg = raw_msg.lower()
+
+                # =========================================
+                # GAME CONTROL — NITRO / STOP / GAS
+                # =========================================
+                controls = {
+                    "nitro": "nitro",
+                    "n": "nitro",
+                    "stop": "stop",
+                    "s": "stop",
+                    "gas": "gas",
+                    "g": "gas",
+                }
+
+                control = controls.get(msg)
+
+                if control:
+                    player = next(
+                        (
+                            p for p in state["active"]
+                            if str(p.get("user", "")).lower() == user.lower()
+                        ),
+                        None
+                    )
+
+                    if player:
+                        player["control"] = control
+                        player["controlAt"] = time.time()
+                        player["controlId"] = int(time.time() * 1000)
+
+                        save_state(state)
+
+                        print(
+                            f"[GAME CONTROL] {user} -> {control}"
+                        )
+
+                        if control == "nitro":
+                            speak(f"Woy {user}, NITROOO! Gaspol!")
+                        elif control == "stop":
+                            speak(f"{user} ngerem! Mobil berhenti!")
+                        else:
+                            speak(f"{user} gas lagi! Cus!")
+
+                    else:
+                        print(
+                            f"[CONTROL IGNORE] {user} belum jadi pembalap"
+                        )
+
+                    continue
 
                 # =========================================
                 # JOIN — HARUS DIPROSES SEBELUM AI
