@@ -1635,6 +1635,7 @@ def start_bot():
     )
 
     speak("Luna siap. Ketik join untuk ikut balapan.")
+    chat_listen_after = time.time()
 
     print("====================================")
 
