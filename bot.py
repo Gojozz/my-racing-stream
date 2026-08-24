@@ -1639,6 +1639,7 @@ def start_bot():
     print("====================================")
 
     dead_count = 0
+    seen_chat_ids = set()
     empty_rounds = 0
 
     while True:
@@ -1660,7 +1661,15 @@ def start_bot():
                 dead_count = 0
 
             try:
-                items = chat.get().sync_items()
+                _raw = chat.get()
+                if _raw is None:
+                    items = []
+                elif isinstance(_raw, list):
+                    items = _raw
+                elif hasattr(_raw, "sync_items"):
+                    items = _raw.sync_items()
+                else:
+                    items = list(_raw) if _raw else []
             except Exception as e:
                 print(f"[CHAT] get() error: {e}")
                 empty_rounds += 1
@@ -1703,6 +1712,19 @@ def start_bot():
                 continue
 
             for c in items:
+                # hindari proses ulang chat saat reconnect
+                try:
+                    cid = getattr(c, "id", None) or getattr(c, "messageId", None)
+                    if cid is None:
+                        cid = f"{getattr(getattr(c,'author',None),'name','')}|{getattr(c,'message','')}|{getattr(c,'datetime',None) or getattr(c,'timestamp',None)}"
+                    cid = str(cid)
+                    if cid in seen_chat_ids:
+                        continue
+                    seen_chat_ids.add(cid)
+                    if len(seen_chat_ids) > 5000:
+                        seen_chat_ids = set(list(seen_chat_ids)[-2000:])
+                except Exception:
+                    pass
 
                 user = normalize_user(
                     c.author.name
