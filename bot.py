@@ -1639,43 +1639,67 @@ def start_bot():
     print("====================================")
 
     dead_count = 0
+    empty_rounds = 0
 
     while True:
 
         try:
+            # Jangan blok baca chat hanya karena is_alive=False
+            # (pytchat sering false-negative → join/chat hilang)
+            alive = True
+            try:
+                alive = bool(chat.is_alive())
+            except Exception:
+                alive = False
 
-            if not chat.is_alive():
+            if not alive:
                 dead_count += 1
-                print(f"[CHAT] is_alive=False ({dead_count}/3)")
-
-                if dead_count < 3:
-                    time.sleep(3)
-                    continue
-
-                print("[CHAT] Koneksi terputus. Reconnect...")
-                time.sleep(8)
-
-                chat = create_chat_with_retry(
-                    VIDEO_ID,
-                    max_retries=8,
-                    delay=6
-                )
-
-                if chat is None:
-                    print("[CHAT] Reconnect gagal. Bot berhenti.")
-                    break
-
-                print("[CHAT] Reconnect berhasil.")
+                if dead_count % 5 == 1:
+                    print(f"[CHAT] is_alive=False ({dead_count}) — tetap coba get()")
+            else:
                 dead_count = 0
-                continue
-
-            dead_count = 0
 
             try:
                 items = chat.get().sync_items()
             except Exception as e:
                 print(f"[CHAT] get() error: {e}")
-                time.sleep(2)
+                empty_rounds += 1
+                # reconnect hanya jika gagal get berkali-kali
+                if empty_rounds >= 8 or dead_count >= 20:
+                    print("[CHAT] Koneksi bermasalah. Reconnect...")
+                    time.sleep(5)
+                    chat = create_chat_with_retry(
+                        VIDEO_ID,
+                        max_retries=8,
+                        delay=5
+                    )
+                    if chat is None:
+                        print("[CHAT] Reconnect gagal. Bot berhenti.")
+                        break
+                    print("[CHAT] Reconnect berhasil.")
+                    dead_count = 0
+                    empty_rounds = 0
+                else:
+                    time.sleep(2)
+                continue
+
+            empty_rounds = 0
+            if not items:
+                time.sleep(0.4)
+                # reconnect hanya jika is_alive false lama + kosong lama
+                if dead_count >= 30:
+                    print("[CHAT] is_alive false terlalu lama. Reconnect...")
+                    time.sleep(5)
+                    chat = create_chat_with_retry(
+                        VIDEO_ID,
+                        max_retries=8,
+                        delay=5
+                    )
+                    if chat is None:
+                        print("[CHAT] Reconnect gagal. Bot berhenti.")
+                        break
+                    print("[CHAT] Reconnect berhasil.")
+                    dead_count = 0
                 continue
 
             for c in items:
