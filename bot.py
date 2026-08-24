@@ -1639,28 +1639,42 @@ def start_bot():
 
     print("====================================")
 
-    dead_count = 0
-    seen_chat_ids = set()
-    empty_rounds = 0
-
+    # ===== Chat loop gaya syc (sederhana + stabil) =====
     while True:
 
         try:
-            # Jangan blok baca chat hanya karena is_alive=False
-            # (pytchat sering false-negative → join/chat hilang)
-            alive = True
-            try:
-                alive = bool(chat.is_alive())
-            except Exception:
-                alive = False
 
-            if not alive:
-                dead_count += 1
-                if dead_count % 5 == 1:
-                    print(f"[CHAT] is_alive=False ({dead_count}) — tetap coba get()")
-            else:
-                dead_count = 0
+            if not chat.is_alive():
 
+                print(
+                    "[CHAT] Koneksi terputus. "
+                    "Reconnect..."
+                )
+
+                time.sleep(5)
+
+                chat = create_chat_with_retry(
+                    VIDEO_ID,
+                    max_retries=5,
+                    delay=5
+                )
+
+                if chat is None:
+
+                    print(
+                        "[CHAT] Reconnect gagal. "
+                        "Bot berhenti."
+                    )
+
+                    break
+
+                print(
+                    "[CHAT] Reconnect berhasil."
+                )
+
+                continue
+
+            # get() bisa list ATAU object (perbaikan racing)
             try:
                 _raw = chat.get()
                 if _raw is None:
@@ -1668,64 +1682,15 @@ def start_bot():
                 elif isinstance(_raw, list):
                     items = _raw
                 elif hasattr(_raw, "sync_items"):
-                    items = _raw.sync_items()
+                    items = _raw.sync_items() or []
                 else:
                     items = list(_raw) if _raw else []
             except Exception as e:
                 print(f"[CHAT] get() error: {e}")
-                empty_rounds += 1
-                # reconnect hanya jika gagal get berkali-kali
-                if empty_rounds >= 8 or dead_count >= 20:
-                    print("[CHAT] Koneksi bermasalah. Reconnect...")
-                    time.sleep(5)
-                    chat = create_chat_with_retry(
-                        VIDEO_ID,
-                        max_retries=8,
-                        delay=5
-                    )
-                    if chat is None:
-                        print("[CHAT] Reconnect gagal. Bot berhenti.")
-                        break
-                    print("[CHAT] Reconnect berhasil.")
-                    dead_count = 0
-                    empty_rounds = 0
-                else:
-                    time.sleep(2)
-                continue
-
-            empty_rounds = 0
-            if not items:
-                time.sleep(0.4)
-                # reconnect hanya jika is_alive false lama + kosong lama
-                if dead_count >= 30:
-                    print("[CHAT] is_alive false terlalu lama. Reconnect...")
-                    time.sleep(5)
-                    chat = create_chat_with_retry(
-                        VIDEO_ID,
-                        max_retries=8,
-                        delay=5
-                    )
-                    if chat is None:
-                        print("[CHAT] Reconnect gagal. Bot berhenti.")
-                        break
-                    print("[CHAT] Reconnect berhasil.")
-                    dead_count = 0
+                time.sleep(2)
                 continue
 
             for c in items:
-                # hindari proses ulang chat saat reconnect
-                try:
-                    cid = getattr(c, "id", None) or getattr(c, "messageId", None)
-                    if cid is None:
-                        cid = f"{getattr(getattr(c,'author',None),'name','')}|{getattr(c,'message','')}|{getattr(c,'datetime',None) or getattr(c,'timestamp',None)}"
-                    cid = str(cid)
-                    if cid in seen_chat_ids:
-                        continue
-                    seen_chat_ids.add(cid)
-                    if len(seen_chat_ids) > 5000:
-                        seen_chat_ids = set(list(seen_chat_ids)[-2000:])
-                except Exception:
-                    pass
 
                 user = normalize_user(
                     c.author.name
@@ -1735,23 +1700,17 @@ def start_bot():
                     c.message
                 ).strip()
 
-                msg = raw_msg.lower()
+                msg = raw_msg.lower().strip()
 
                 # =========================================
-                # JOIN — HARUS DIPROSES SEBELUM AI
+                # JOIN — sama seperti syc
                 # =========================================
 
-                # join longgar: "join", "join!", "!join", "mau join"
-                msg_join = re.sub(r"[^a-z0-9\s]", " ", msg)
-                msg_join = re.sub(r"\s+", " ", msg_join).strip()
-                is_join = (
-                    msg_join == "join"
-                    or msg_join.startswith("join ")
-                    or msg_join.endswith(" join")
-                    or " join " in f" {msg_join} "
-                    or msg_join == "join join"
-                )
-                if is_join:
+                if (
+                    msg == "join"
+                    or
+                    msg.startswith("join ")
+                ):
 
                     result = add_player(
                         state,
@@ -1802,39 +1761,65 @@ def start_bot():
                             f"sudah terdaftar"
                         )
 
-                    # Jangan kirim JOIN ke LUNA.
                     continue
 
                 # =========================================
-                # CHAT → LUNA
+                # CHAT → LUNA (alur syc)
                 # =========================================
 
                 if raw_msg:
 
                     now = time.time()
-                    recent_chat_times.append(now)
-                    while recent_chat_times and (now - recent_chat_times[0]) > CHAT_BUSY_WINDOW:
-                        recent_chat_times.pop(0)
 
-                    if is_spam_or_dup(user, raw_msg):
-                        print(f"[CHAT SPAM] {user}: {raw_msg}")
-                        process_chat_queue_once()
-                        continue
+                    last_user_time = (
+                        last_chat_response
+                        .get(user.lower(), 0)
+                    )
 
-                    if len(raw_msg) > 180:
-                        process_chat_queue_once()
-                        continue
+                    if (
+                        now - last_user_time
+                        >= CHAT_COOLDOWN
+                    ):
 
-                    last_user_time = last_chat_response.get(user.lower(), 0)
-                    if now - last_user_time < CHAT_COOLDOWN:
-                        process_chat_queue_once()
-                        continue
+                        if len(raw_msg) <= 180:
 
-                    last_chat_response[user.lower()] = now
-                    sc = score_chat(user, raw_msg)
-                    print(f"[CHAT IN] {user}: {raw_msg} score={sc}")
-                    enqueue_chat(user, raw_msg)
-                    process_chat_queue_once()
+                            print(
+                                f"[CHAT IN] {user}: {raw_msg}"
+                            )
+
+                            reply = None
+
+                            try:
+                                if ai_ready:
+                                    reply = ask_luna(
+                                        user,
+                                        raw_msg,
+                                        "chat"
+                                    )
+                            except NameError:
+                                reply = ask_luna(
+                                    user,
+                                    raw_msg,
+                                    "chat"
+                                )
+
+                            if not reply:
+                                reply = random.choice([
+                                    f"Woy {user}, gas terus komentarnya!",
+                                    f"{user} nyolot di komentar, LUNA denger nih!",
+                                    f"Mantap {user}, komentarnya nambah seru!",
+                                    f"Siap {user}, LUNA catat di kepala!",
+                                    f"Kocak {user}, jangan berhenti komen!",
+                                ])
+                                print("[LUNA] fallback template")
+
+                            print(f"[LUNA CHAT] {user}: {raw_msg}")
+                            print(f"[LUNA] {reply}")
+                            speak(reply)
+
+                            last_chat_response[
+                                user.lower()
+                            ] = now
 
         except Exception as e:
 
@@ -1845,6 +1830,7 @@ def start_bot():
             time.sleep(2)
 
         time.sleep(0.25)
+
 
 
 if __name__ == "__main__":
