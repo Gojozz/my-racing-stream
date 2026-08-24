@@ -1538,7 +1538,7 @@ def start_bot():
                 f"[AUTO] Percobaan {attempt}/15..."
             )
 
-            found_id = find_live_video_id()
+            found_id = get_live_video_id()
 
             if found_id:
 
