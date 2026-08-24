@@ -210,11 +210,11 @@ DEEPSEEK_BASE_URL = os.environ.get(
 
 DEEPSEEK_MODEL = os.environ.get(
     "DEEPSEEK_MODEL",
-    "openai/gpt-oss-20b"
+    "qwen/qwen3.6-27b"
 )
 
 # Prioritas: GROQ_MODEL > DEEPSEEK_MODEL
-GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or DEEPSEEK_MODEL
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or "qwen/qwen3.6-27b"
 
 AI_PROVIDER = "groq"
 AI_API_KEY = GROQ_API_KEY
@@ -469,7 +469,7 @@ def process_chat_queue_once(race_state_hint=""):
 
 
 
-ENGAGEMENT_INTERVAL = 90
+ENGAGEMENT_INTERVAL = 180
 
 last_engagement_time = time.time() - 10000
 
@@ -771,6 +771,7 @@ def ask_luna(user_name, message, context="chat"):
             ],
             "temperature": 0.8,
             "max_tokens": 80,
+            "reasoning_effort": "none",
         }
         with httpx.Client(timeout=15.0) as client:
             resp = client.post(
@@ -785,7 +786,12 @@ def ask_luna(user_name, message, context="chat"):
             print("[LUNA ERROR] HTTP", resp.status_code, resp.text[:300])
             return None
         data = resp.json()
-        raw = data["choices"][0]["message"].get("content")
+        msg_obj = data["choices"][0]["message"]
+        raw = msg_obj.get("content")
+        if not raw or not str(raw).strip():
+            raw = msg_obj.get("reasoning") or msg_obj.get("reasoning_content")
+        if (not raw or not str(raw).strip()) and isinstance(msg_obj, dict):
+            raw = msg_obj.get("text")
         print("[LUNA RAW] " + repr(raw)[:500])
         if not raw or not str(raw).strip():
             print("[LUNA ERROR] response content kosong")
@@ -1045,7 +1051,10 @@ def save_state(state):
 
 
 def normalize_user(user):
-    return str(user).strip()
+    u = str(user).strip()
+    if u.startswith("@"):
+        u = u[1:]
+    return u
 
 
 def already_joined(state, user):
@@ -1232,7 +1241,7 @@ def commentate_race(event, detail=""):
     }
 
     # 30% chance pakai AI untuk event balapan
-    use_ai = random.random() < 0.30
+    use_ai = False  # race = template only, hemat + tidak kosong
     reply = None
     if use_ai:
         prompt = prompt_map.get(event, f"Event balapan: {event}. {detail}")
@@ -1681,11 +1690,17 @@ def start_bot():
                 # JOIN — HARUS DIPROSES SEBELUM AI
                 # =========================================
 
-                if (
-                    msg == "join"
-                    or
-                    msg.startswith("join ")
-                ):
+                # join longgar: "join", "join!", "!join", "mau join"
+                msg_join = re.sub(r"[^a-z0-9\s]", " ", msg)
+                msg_join = re.sub(r"\s+", " ", msg_join).strip()
+                is_join = (
+                    msg_join == "join"
+                    or msg_join.startswith("join ")
+                    or msg_join.endswith(" join")
+                    or " join " in f" {msg_join} "
+                    or msg_join == "join join"
+                )
+                if is_join:
 
                     result = add_player(
                         state,

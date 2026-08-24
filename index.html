@@ -1944,7 +1944,7 @@ const countdownText = document.getElementById('countdown-text');
 
 
 let lastRaceCommentAt = 0;
-const RACE_COMMENT_GAP = 14; // detik antar komentar mid-race
+const RACE_COMMENT_GAP = 99999; // praktis mati: jangan spam mid/pulse // detik antar komentar mid-race
 
 function sendRaceEvent(event, detail="") {
     try {
@@ -2162,11 +2162,9 @@ function animate() {
 
                     finishedCount++;
                     if (finishedCount === 1) {
-                        sendRaceEvent("finish", car.name);
                         sendRaceEvent("winner", car.name);
-                    } else {
-                        sendRaceEvent("finish", car.name);
                     }
+                    // finish mobil ke-2..5 tidak di-TTS (kurangi spam)
 
                     // Mobil pertama yang finish memulai
                     // fase kamera finish.
