@@ -197,7 +197,7 @@ last_processed_race = None
 
 
 # =========================================================
-# LUNA AI — Groq allam-2-7b
+# LUNA AI — Groq openai/gpt-oss-20b
 # =========================================================
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
@@ -210,13 +210,16 @@ DEEPSEEK_BASE_URL = os.environ.get(
 
 DEEPSEEK_MODEL = os.environ.get(
     "DEEPSEEK_MODEL",
-    "allam-2-7b"
+    "openai/gpt-oss-20b"
 )
+
+# Prioritas: GROQ_MODEL > DEEPSEEK_MODEL
+GROQ_MODEL = os.environ.get("GROQ_MODEL", "").strip() or DEEPSEEK_MODEL
 
 AI_PROVIDER = "groq"
 AI_API_KEY = GROQ_API_KEY
 AI_BASE_URL = DEEPSEEK_BASE_URL
-AI_MODEL = DEEPSEEK_MODEL
+AI_MODEL = GROQ_MODEL
 ai_ready = bool(GROQ_API_KEY)
 
 if ai_ready:
