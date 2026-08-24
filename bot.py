@@ -1681,83 +1681,164 @@ def start_bot():
     # Buang histori live sebelumnya / buffer awal pytchat
     
     speak("Luna siap. Ketik join untuk ikut balapan.")
-    chat_listen_after = time.time()
 
     print("====================================")
 
-    # ===== Chat loop gaya syc (sederhana + stabil) =====
-    # ===== Chat loop gaya syc (sederhana + get aman) =====
-    # Loop chat = pola syc + get aman (tanpa drain)
-    get_fail = 0
+    # ===== LOOP CHAT = pola repo syc (hampir identik) =====
     while True:
 
         try:
-            # Jangan reconnect hanya karena is_alive false
-            # (di Actions sering false-negative)
-            try:
-                items = fetch_chat_items(chat)
-            except Exception as e:
-                items = None
-                print(f"[CHAT] fetch error: {e}")
 
-            if items is None:
-                get_fail += 1
-                if get_fail >= 12:
-                    print("[CHAT] get gagal berkali-kali, reconnect...")
-                    time.sleep(5)
-                    chat = create_chat_with_retry(
-                        VIDEO_ID, max_retries=5, delay=5
+            if not chat.is_alive():
+
+                print(
+                    "[CHAT] Koneksi terputus. "
+                    "Reconnect..."
+                )
+
+                time.sleep(5)
+
+                chat = create_chat_with_retry(
+                    VIDEO_ID,
+                    max_retries=5,
+                    delay=5
+                )
+
+                if chat is None:
+
+                    print(
+                        "[CHAT] Reconnect gagal. "
+                        "Bot berhenti."
                     )
-                    if chat is None:
-                        print("[CHAT] Reconnect gagal. Bot berhenti.")
-                        break
-                    print("[CHAT] Reconnect berhasil.")
-                    get_fail = 0
-                else:
-                    time.sleep(1)
+
+                    break
+
+                print(
+                    "[CHAT] Reconnect berhasil."
+                )
+
                 continue
 
-            get_fail = 0
+            # syc: for c in chat.get().sync_items()
+            # racing: get() kadang list → handle keduanya
+            _raw = chat.get()
+            if _raw is None:
+                _items = []
+            elif isinstance(_raw, list):
+                _items = _raw
+            else:
+                _items = _raw.sync_items()
 
-            for c in items:
+            for c in _items:
 
-                user = normalize_user(c.author.name)
-                raw_msg = str(c.message).strip()
-                msg = raw_msg.lower().strip()
+                user = normalize_user(
+                    c.author.name
+                )
 
-                # JOIN — identik syc
-                if msg == "join" or msg.startswith("join "):
-                    result = add_player(state, user)
+                raw_msg = str(
+                    c.message
+                ).strip()
+
+                msg = raw_msg.lower()
+
+                # =========================================
+                # JOIN — HARUS DIPROSES SEBELUM AI
+                # =========================================
+
+                if (
+                    msg == "join"
+                    or
+                    msg.startswith("join ")
+                ):
+
+                    result = add_player(
+                        state,
+                        user
+                    )
+
                     if result == "active":
+
                         print(
-                            f"[JOIN] {user} -> PEMBALAP AKTIF "
-                            f"({len(state['active'])}/{MAX_PLAYERS})"
+                            f"[JOIN] {user} -> "
+                            f"PEMBALAP AKTIF "
+                            f"({len(state['active'])}/"
+                            f"{MAX_PLAYERS})"
                         )
+
                         save_state(state)
+
                         print(
                             f"[STATE] active: "
                             f"{[p['user'] for p in state['active']]}"
                         )
-                        speak(f"Woy {user} masuk lintasan, gas pol!")
+
+                        speak(
+                            f"Woy {user} masuk lintasan, gas pol!"
+                        )
+
                     elif result == "queue":
-                        position = len(state["queue"])
-                        print(f"[QUEUE] {user} -> ANTREAN #{position}")
+
+                        position = len(
+                            state["queue"]
+                        )
+
+                        print(
+                            f"[QUEUE] {user} -> "
+                            f"ANTREAN #{position}"
+                        )
+
                         save_state(state)
-                        speak(f"{user} antri dulu ya, bentar lagi gas!")
+
+                        speak(
+                            f"{user} antri dulu ya, bentar lagi gas!"
+                        )
+
                     else:
-                        print(f"[IGNORE] {user} sudah terdaftar")
+
+                        print(
+                            f"[IGNORE] {user} "
+                            f"sudah terdaftar"
+                        )
+
+                    # Jangan kirim JOIN ke LUNA.
                     continue
 
-                # CHAT → LUNA — identik syc
+                # =========================================
+                # CHAT → LUNA
+                # =========================================
+
                 if raw_msg:
+
                     now = time.time()
-                    last_user_time = last_chat_response.get(user.lower(), 0)
-                    if now - last_user_time >= CHAT_COOLDOWN:
+
+                    last_user_time = (
+                        last_chat_response
+                        .get(user.lower(), 0)
+                    )
+
+                    if (
+                        now - last_user_time
+                        >= CHAT_COOLDOWN
+                    ):
+
+                        # Abaikan chat terlalu panjang
                         if len(raw_msg) <= 180:
-                            print(f"[CHAT IN] {user}: {raw_msg}")
+
+                            print(
+                                f"[CHAT IN] {user}: {raw_msg}"
+                            )
+
                             reply = None
+
+                            # syc: if groq_client — di racing pakai ai_ready
                             if ai_ready:
-                                reply = ask_luna(user, raw_msg, "chat")
+                                reply = ask_luna(
+                                    user,
+                                    raw_msg,
+                                    "chat"
+                                )
+
+                            # Fallback kalau AI kosong/gagal
                             if not reply:
                                 reply = random.choice([
                                     f"Woy {user}, gas terus komentarnya!",
@@ -1766,14 +1847,22 @@ def start_bot():
                                     f"Siap {user}, LUNA catat di kepala!",
                                     f"Kocak {user}, jangan berhenti komen!",
                                 ])
-                                print("[LUNA] fallback template")
+                                print("[LUNA] fallback tanpa Groq")
+
                             print(f"[LUNA CHAT] {user}: {raw_msg}")
                             print(f"[LUNA] {reply}")
                             speak(reply)
-                            last_chat_response[user.lower()] = now
+
+                            last_chat_response[
+                                user.lower()
+                            ] = now
 
         except Exception as e:
-            print(f"[CHAT ERROR] {e}")
+
+            print(
+                f"[CHAT ERROR] {e}"
+            )
+
             time.sleep(2)
 
         time.sleep(0.25)
