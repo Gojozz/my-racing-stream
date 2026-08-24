@@ -1543,6 +1543,29 @@ def fetch_chat_items(chat):
     return []
 
 
+
+def drain_chat_buffer(chat, rounds=8, pause=0.35):
+    """Buang histori/buffer pytchat tanpa join/AI."""
+    dumped = 0
+    for _ in range(rounds):
+        try:
+            raw = chat.get()
+            if raw is None:
+                items = []
+            elif isinstance(raw, list):
+                items = raw
+            elif hasattr(raw, "sync_items"):
+                items = raw.sync_items() or []
+            else:
+                items = list(raw) if raw else []
+            dumped += len(items or [])
+        except Exception:
+            pass
+        time.sleep(pause)
+    print(f"[CHAT] Buffer histori dibuang: {dumped} pesan")
+    return dumped
+
+
 def start_bot():
 
     global VIDEO_ID
@@ -1655,6 +1678,9 @@ def start_bot():
         "LUNA siap membalas komentar."
     )
 
+    # Buang histori live sebelumnya / buffer awal pytchat
+    drain_chat_buffer(chat, rounds=10, pause=0.3)
+
     speak("Luna siap. Ketik join untuk ikut balapan.")
     chat_listen_after = time.time()
 
@@ -1693,7 +1719,7 @@ def start_bot():
                 print(
                     "[CHAT] Reconnect berhasil."
                 )
-
+                drain_chat_buffer(chat, rounds=6, pause=0.25)
                 continue
 
             items = fetch_chat_items(chat)
