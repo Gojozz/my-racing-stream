@@ -1621,41 +1621,47 @@ def start_bot():
 
     print("====================================")
 
+    dead_count = 0
+
     while True:
 
         try:
 
             if not chat.is_alive():
+                dead_count += 1
+                print(f"[CHAT] is_alive=False ({dead_count}/3)")
 
-                print(
-                    "[CHAT] Koneksi terputus. "
-                    "Reconnect..."
-                )
+                if dead_count < 3:
+                    time.sleep(3)
+                    continue
 
-                time.sleep(5)
+                print("[CHAT] Koneksi terputus. Reconnect...")
+                time.sleep(8)
 
                 chat = create_chat_with_retry(
                     VIDEO_ID,
-                    max_retries=5,
-                    delay=5
+                    max_retries=8,
+                    delay=6
                 )
 
                 if chat is None:
-
-                    print(
-                        "[CHAT] Reconnect gagal. "
-                        "Bot berhenti."
-                    )
-
+                    print("[CHAT] Reconnect gagal. Bot berhenti.")
                     break
 
-                print(
-                    "[CHAT] Reconnect berhasil."
-                )
-
+                print("[CHAT] Reconnect berhasil.")
+                dead_count = 0
                 continue
 
-            for c in chat.get().sync_items():
+            dead_count = 0
+
+            try:
+                items = chat.get().sync_items()
+            except Exception as e:
+                print(f"[CHAT] get() error: {e}")
+                time.sleep(2)
+                continue
+
+            for c in items:
 
                 user = normalize_user(
                     c.author.name
