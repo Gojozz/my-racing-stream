@@ -774,6 +774,7 @@ def ask_luna(user_name, message, context="chat"):
                 AI_BASE_URL + "/chat/completions",
                 headers={
                     "Content-Type": "application/json",
+                    "Authorization": f"Bearer {AI_API_KEY}",
                 },
                 json=payload,
             )
