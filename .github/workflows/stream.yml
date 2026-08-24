@@ -31,7 +31,7 @@ jobs:
             wget
       - name: Install Python dependencies
         run: |
-          python3 -m pip install --break-system-packages pytchat httpx google-api-python-client google-auth google-auth-httplib2 groq
+          python3 -m pip install --break-system-packages pytchat httpx chat-downloader google-api-python-client google-auth google-auth-httplib2 groq
 
       - name: Install Piper TTS
         run: |

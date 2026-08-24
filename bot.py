@@ -65,6 +65,8 @@ def get_live_video_id(channel_id=None):
 
 
 import pytchat
+from chat_downloader import ChatDownloader
+from chat_downloader.errors import ChatDownloaderError
 import time
 import os
 import json
@@ -1566,306 +1568,24 @@ def drain_chat_buffer(chat, rounds=8, pause=0.35):
     return dumped
 
 
-def start_bot():
 
-    global VIDEO_ID
+def start_chat_loop(state, video_id):
+    """Baca live chat via chat-downloader (generator, reconnect internal)."""
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    cookies = None
+    if Path("cookies.txt").exists():
+        cookies = "cookies.txt"
+        print("[CHAT] pakai cookies.txt")
+    downloader = ChatDownloader(cookies=cookies)
 
-    print("====================================")
-    print(
-        " LUNA CHAT + COMMENTATOR ONLINE"
-    )
-    print(" Groq + Piper TTS")
-    print("====================================")
-
-    if VIDEO_ID:
-
-        print(
-            f"[MANUAL] Menggunakan "
-            f"YOUTUBE_LIVE_ID: {VIDEO_ID}"
-        )
-
-    else:
-
-        print(
-            "[AUTO] Mencari live aktif..."
-        )
-
-        for attempt in range(
-            1,
-            16
-        ):
-
-            print(
-                f"[AUTO] Percobaan {attempt}/15..."
-            )
-
-            found_id = get_live_video_id()
-
-            if found_id:
-
-                VIDEO_ID = found_id
-
-                break
-
-            time.sleep(5)
-
-        if not VIDEO_ID:
-
-            print(
-                "ERROR: Tidak menemukan "
-                "live stream aktif."
-            )
-
-            return
-
-    print(
-        f"[BOT] Live ID: {VIDEO_ID}"
-    )
-
-    print(
-        f"[BOT] Max aktif: {MAX_PLAYERS}"
-    )
-
-    print("====================================")
-
-    # Reset slot pembalap tiap start stream
-    # biar nama lama (mis. tanidong) tidak nempel tanpa join
-    state = {
-        "active": [],
-        "queue": [],
-        "lastUpdate": 0
-    }
-    save_state(state)
-    print("[JOIN] Slot dikosongkan. Tunggu penonton ketik join.")
-
-    # Rotation server lama tetap hidup.
-    threading.Thread(
-        target=start_rotation_server,
-        daemon=True
-    ).start()
-
-    print(
-        "[CHAT] Menunggu chat siap..."
-    )
-
-    time.sleep(8)
-
-    chat = create_chat_with_retry(
-        VIDEO_ID,
-        max_retries=10,
-        delay=6
-    )
-
-    if chat is None:
-
-        print(
-            "ERROR: Gagal konek ke live chat "
-            "setelah banyak percobaan."
-        )
-
-        return
-
-    print(
-        f"Bot mendengarkan live chat: "
-        f"{VIDEO_ID}"
-    )
-
-    print(
-        "Siap menerima perintah: join"
-    )
-
-    print(
-        "LUNA siap membalas komentar."
-    )
-
-    # Buang histori live sebelumnya / buffer awal pytchat
-    
+    print("[CHAT] chat-downloader listen:", url)
+    print("Siap menerima perintah: join")
+    print("LUNA siap membalas komentar.")
     speak("Luna siap. Ketik join untuk ikut balapan.")
 
     print("====================================")
-
-    # ===== LOOP CHAT = pola repo syc (hampir identik) =====
-    while True:
-
-        try:
-
-            if not chat.is_alive():
-
-                print(
-                    "[CHAT] Koneksi terputus. "
-                    "Reconnect..."
-                )
-
-                time.sleep(5)
-
-                chat = create_chat_with_retry(
-                    VIDEO_ID,
-                    max_retries=5,
-                    delay=5
-                )
-
-                if chat is None:
-
-                    print(
-                        "[CHAT] Reconnect gagal. "
-                        "Bot berhenti."
-                    )
-
-                    break
-
-                print(
-                    "[CHAT] Reconnect berhasil."
-                )
-
-                continue
-
-            # syc: for c in chat.get().sync_items()
-            # racing: get() kadang list → handle keduanya
-            _raw = chat.get()
-            if _raw is None:
-                _items = []
-            elif isinstance(_raw, list):
-                _items = _raw
-            else:
-                _items = _raw.sync_items()
-
-            for c in _items:
-
-                user = normalize_user(
-                    c.author.name
-                )
-
-                raw_msg = str(
-                    c.message
-                ).strip()
-
-                msg = raw_msg.lower()
-
-                # =========================================
-                # JOIN — HARUS DIPROSES SEBELUM AI
-                # =========================================
-
-                if (
-                    msg == "join"
-                    or
-                    msg.startswith("join ")
-                ):
-
-                    result = add_player(
-                        state,
-                        user
-                    )
-
-                    if result == "active":
-
-                        print(
-                            f"[JOIN] {user} -> "
-                            f"PEMBALAP AKTIF "
-                            f"({len(state['active'])}/"
-                            f"{MAX_PLAYERS})"
-                        )
-
-                        save_state(state)
-
-                        print(
-                            f"[STATE] active: "
-                            f"{[p['user'] for p in state['active']]}"
-                        )
-
-                        speak(
-                            f"Woy {user} masuk lintasan, gas pol!"
-                        )
-
-                    elif result == "queue":
-
-                        position = len(
-                            state["queue"]
-                        )
-
-                        print(
-                            f"[QUEUE] {user} -> "
-                            f"ANTREAN #{position}"
-                        )
-
-                        save_state(state)
-
-                        speak(
-                            f"{user} antri dulu ya, bentar lagi gas!"
-                        )
-
-                    else:
-
-                        print(
-                            f"[IGNORE] {user} "
-                            f"sudah terdaftar"
-                        )
-
-                    # Jangan kirim JOIN ke LUNA.
-                    continue
-
-                # =========================================
-                # CHAT → LUNA
-                # =========================================
-
-                if raw_msg:
-
-                    now = time.time()
-
-                    last_user_time = (
-                        last_chat_response
-                        .get(user.lower(), 0)
-                    )
-
-                    if (
-                        now - last_user_time
-                        >= CHAT_COOLDOWN
-                    ):
-
-                        # Abaikan chat terlalu panjang
-                        if len(raw_msg) <= 180:
-
-                            print(
-                                f"[CHAT IN] {user}: {raw_msg}"
-                            )
-
-                            reply = None
-
-                            # syc: if groq_client — di racing pakai ai_ready
-                            if ai_ready:
-                                reply = ask_luna(
-                                    user,
-                                    raw_msg,
-                                    "chat"
-                                )
-
-                            # Fallback kalau AI kosong/gagal
-                            if not reply:
-                                reply = random.choice([
-                                    f"Woy {user}, gas terus komentarnya!",
-                                    f"{user} nyolot di komentar, LUNA denger nih!",
-                                    f"Mantap {user}, komentarnya nambah seru!",
-                                    f"Siap {user}, LUNA catat di kepala!",
-                                    f"Kocak {user}, jangan berhenti komen!",
-                                ])
-                                print("[LUNA] fallback tanpa Groq")
-
-                            print(f"[LUNA CHAT] {user}: {raw_msg}")
-                            print(f"[LUNA] {reply}")
-                            speak(reply)
-
-                            last_chat_response[
-                                user.lower()
-                            ] = now
-
-        except Exception as e:
-
-            print(
-                f"[CHAT ERROR] {e}"
-            )
-
-            time.sleep(2)
-
-        time.sleep(0.25)
+    print("[CHAT] Memakai chat-downloader (bukan pytchat loop)")
+    run_chat_downloader_loop(state, VIDEO_ID)
 
 
 
