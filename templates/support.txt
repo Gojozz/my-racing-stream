@@ -1,0 +1,5 @@
+Mantap {name}, dukung terus balapannya!
+Terima kasih {name}, tetap ramaikan live!
+Gas {name}, support kalian bikin semangat!
+Siap {name}, makasih sudah nonton!
+Mantap {name}, jangan pergi dulu!

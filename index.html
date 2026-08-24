@@ -18,7 +18,7 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: #2a1a3a;
+        background: #8fcaf0;
         font-family: Arial, Helvetica, sans-serif;
     }
 
@@ -322,14 +322,6 @@
             margin: 5px 0;
         }
     }
-
-/* SHORTS PORTRAIT */
-@media (max-aspect-ratio: 3/4) {
-    #hud { top: 12px; left: 10px; transform: scale(0.85); transform-origin: top left; }
-    #chat-panels { top: 12px; right: 8px; width: 150px; transform: scale(0.9); transform-origin: top right; }
-    .hud-card { min-width: 180px; padding: 10px 12px; }
-    .hud-value { font-size: 22px; }
-}
 </style>
 </head>
 
@@ -412,11 +404,11 @@ let raceResetTimer = null;
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x5ba3d9);  // langit biru
+scene.background = new THREE.Color(0x8fcaf0);
 
 scene.fog = new THREE.Fog(
-    0x87b8d8,
-    160,
+    0xb9dded,
+    170,
     650
 );
 
@@ -470,9 +462,6 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type =
     THREE.PCFSoftShadowMap;
 
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.72;
-
 document.body.appendChild(
     renderer.domElement
 );
@@ -484,27 +473,39 @@ document.body.appendChild(
 
 const hemiLight =
     new THREE.HemisphereLight(
-        0xe8b898,   // langit senja
-        0x2a1a28,   // tanah
-        0.48
+        0xd7ecff,
+        0x355a2d,
+        0.45
     );
 
 scene.add(hemiLight);
 
 
 const sunLight =
-    new THREE.DirectionalLight(0xff8a55, 0.55);
+    new THREE.DirectionalLight(
+        0xfff1d2,
+        0.75
+    );
 
 sunLight.position.set(
-    -120,
-    70,     // sedikit lebih tinggi
-    -50
+    120,
+    220,
+    100
 );
 
-// Cahaya isi dari sisi berlawanan (mengurangi bayangan hitam + silau)
-const fillLight = new THREE.DirectionalLight(0x6a4a7a, 0.28);
-fillLight.position.set(100, 40, 80);
-scene.add(fillLight);
+sunLight.castShadow = true;
+
+sunLight.shadow.mapSize.width = 1024;
+sunLight.shadow.mapSize.height = 1024;
+
+sunLight.shadow.camera.left = -300;
+sunLight.shadow.camera.right = 300;
+sunLight.shadow.camera.top = 300;
+sunLight.shadow.camera.bottom = -300;
+
+sunLight.shadow.camera.far = 600;
+
+sunLight.shadow.bias = -0.001;
 
 scene.add(sunLight);
 
@@ -538,98 +539,6 @@ ground.position.y = -1.05;
 ground.receiveShadow = true;
 
 scene.add(ground);
-
-/* =========================================================
-   AWAN SEDERHANA (SENJA)
-========================================================= */
-function createCloud() {
-    const group = new THREE.Group();
-    const mat = new THREE.MeshLambertMaterial({
-        color: 0xc49a7a,   // awan lebih redup
-        transparent: true,
-        opacity: 0.82
-    });
-
-    const positions = [
-        [0, 0, 0],
-        [2.8, 0.4, 0.6],
-        [-2.5, 0.3, -0.5],
-        [1.2, 0.9, -1.2],
-        [-1.5, 0.7, 1.1]
-    ];
-
-    positions.forEach(p => {
-        const cloud = new THREE.Mesh(
-            new THREE.SphereGeometry(1.8 + Math.random() * 1.2, 8, 8),
-            mat
-        );
-        cloud.position.set(p[0], p[1], p[2]);
-        cloud.scale.y = 0.55;
-        group.add(cloud);
-    });
-
-    return group;
-}
-
-// Letakkan beberapa awan
-const cloudPositions = [
-    [-80, 55, -120],
-    [60, 48, -90],
-    [-40, 62, 30],
-    [100, 50, -40],
-    [-120, 45, 80],
-    [30, 58, 110]
-];
-
-cloudPositions.forEach(pos => {
-    const cloud = createCloud();
-    cloud.position.set(pos[0], pos[1], pos[2]);
-    cloud.scale.setScalar(2.8 + Math.random() * 1.5);
-    scene.add(cloud);
-});
-
-
-/* =========================================================
-   POHON SEDERHANA
-========================================================= */
-function createTree() {
-    const group = new THREE.Group();
-
-    // Batang
-    const trunk = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.35, 0.5, 4.5, 6),
-        new THREE.MeshLambertMaterial({ color: 0x3d2818 })
-    );
-    trunk.position.y = 2.2;
-    trunk.castShadow = true;
-    group.add(trunk);
-
-    // Daun (beberapa bola)
-    const leafMat = new THREE.MeshLambertMaterial({ color: 0x1a4a2a });
-    const leafPositions = [
-        [0, 5.2, 0],
-        [1.3, 4.6, 0.8],
-        [-1.4, 4.7, -0.6],
-        [0.6, 5.8, -1.1],
-        [-0.9, 5.5, 1.0]
-    ];
-
-    leafPositions.forEach(p => {
-        const leaf = new THREE.Mesh(
-            new THREE.SphereGeometry(1.6 + Math.random() * 0.5, 7, 7),
-            leafMat
-        );
-        leaf.position.set(p[0], p[1], p[2]);
-        leaf.castShadow = true;
-        group.add(leaf);
-    });
-
-    return group;
-}
-
-// pohon lama dihapus
-
-
 
 
 /* =========================================================
@@ -738,29 +647,6 @@ const trackCurve =
         "catmullrom",
         0.5
     );
-
-/* Pohon di sisi lintasan — jauh dari aspal & bukan dekat finish */
-(function placeSideTrees() {
-    if (typeof createTree !== "function") return;
-    for (let i = 0; i < 12; i++) {
-        let t = (i + 1) / 14;           // 1/14 .. 12/14
-        if (t < 0.10 || t > 0.90) continue; // jangan dekat start/finish
-        const point = trackCurve.getPointAt(t);
-        const tangent = trackCurve.getTangentAt(t);
-        const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-        const dir = (i % 2 === 0) ? 1 : -1;
-        const dist = TRACK_WIDTH + 16 + (i % 4) * 3;
-        const tree = createTree();
-        tree.position.set(
-            point.x + side.x * dir * dist,
-            0,
-            point.z + side.z * dir * dist
-        );
-        const s = 0.85 + Math.random() * 0.4;
-        tree.scale.setScalar(s);
-        scene.add(tree);
-    }
-})();
 
 
 /* =========================================================
@@ -888,7 +774,7 @@ function createRoad() {
 
     const material =
         new THREE.MeshBasicMaterial({
-            color: 0x808080,
+            color: 0x555555,
             side: THREE.DoubleSide
         });
 
@@ -898,7 +784,7 @@ function createRoad() {
             material
         );
 
-    mesh.receiveShadow = false;
+    mesh.receiveShadow = true;
 
     scene.add(mesh);
 
@@ -1027,10 +913,8 @@ for (
         );
 
     const mat =
-        new THREE.MeshStandardMaterial({
-            color: 0x777777,
-            roughness: 0.9,
-            metalness: 0.0
+        new THREE.MeshBasicMaterial({
+            color: 0xffffff
         });
 
     const dash =
@@ -1199,7 +1083,7 @@ for (let row = 0; row < rows; row++) {
             new THREE.MeshStandardMaterial({
                 color:
                     (row + col) % 2 === 0
-                        ? 0xe8d5c0
+                        ? 0xffffff
                         : 0x111111,
                 roughness: 0.8
             })
@@ -1242,7 +1126,7 @@ function createRaceFlag(side) {
             8
         ),
         new THREE.MeshStandardMaterial({
-            color: 0xb0b0b0,
+            color: 0xe5e5e5,
             metalness: 0.5,
             roughness: 0.4
         })
@@ -1361,7 +1245,7 @@ function createGrandstand() {
                         i % 3 === 0
                             ? 0xffd54f
                             : i % 3 === 1
-                                ? 0xe8d5c0
+                                ? 0xffffff
                                 : 0xff5555
                 })
             );
@@ -1441,10 +1325,9 @@ function createBuilding(height, width, depth) {
     const buildingMat =
         new THREE.MeshStandardMaterial({
             color:
-                0x4a5560 +
-                Math.floor(Math.random() * 4) * 0x030303,
-            roughness: 0.92,
-            metalness: 0.05
+                0x7a8794 +
+                Math.floor(Math.random() * 5) * 0x050505,
+            roughness: 0.9
         });
 
     const building = new THREE.Mesh(
@@ -1578,7 +1461,7 @@ function createWheel() {
     );
 
     const rimMat = new THREE.MeshStandardMaterial({
-        color: 0x8a8a8a,
+        color: 0xc9c9c9,
         metalness: 0.8,
         roughness: 0.3
     });
@@ -1607,59 +1490,46 @@ const CAR_MODELS = [
     { url: "assets/rover.glb",   name: "Maya",   color: "#ff2d95", hex: 0xff2d95, scale: 1.274,  y: 2.2 }
 ];
 
-function tintCarMesh(root, colorHex, modelUrl) {
-    // Hanya GTR & Rover: kaca dibuat hitam. Mobil lain = warna asli aset.
-    const url = String(modelUrl || "").toLowerCase();
-    const blackGlassOnly = url.includes("gtr") || url.includes("rover");
-
+function tintCarMesh(root, colorHex) {
     root.traverse(obj => {
-        if (!obj.isMesh) return;
-        obj.castShadow = true;
-        obj.receiveShadow = true;
-
-        if (!blackGlassOnly || !obj.material) return;
+        if (!obj.isMesh || !obj.material) return;
 
         const meshName = (obj.name || "").toLowerCase();
         const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
 
-        let isGlass =
-            meshName.includes("glass") ||
-            meshName.includes("window") ||
-            meshName.includes("kaca") ||
-            meshName.includes("windshield") ||
-            meshName.includes("windscreen") ||
-            meshName.includes("canopy") ||
-            meshName.includes("screen");
-
+        // Cek apakah ini kaca (dari nama mesh ATAU nama material)
+        let isGlass = meshName.includes("glass") || meshName.includes("window");
         if (!isGlass) {
             for (const m of mats) {
                 const matName = (m.name || "").toLowerCase();
-                if (
-                    matName.includes("glass") ||
-                    matName.includes("window") ||
-                    matName.includes("kaca") ||
-                    matName.includes("transparent")
-                ) {
-                    isGlass = true;
-                    break;
-                }
-                // material transparan di GLB biasanya kaca
-                if (m.transparent === true && (m.opacity === undefined || m.opacity < 0.98)) {
+                if (matName.includes("glass") || matName.includes("window")) {
                     isGlass = true;
                     break;
                 }
             }
         }
 
-        if (!isGlass) return;
+        if (isGlass) {
+            obj.material = new THREE.MeshStandardMaterial({
+                color: 0x111111,
+                metalness: 0.15,
+                roughness: 0.2,
+                transparent: true,
+                opacity: 0.7
+            });
+            return;
+        }
 
-        obj.material = new THREE.MeshStandardMaterial({
-            color: 0x0a0a0a,
-            metalness: 0.35,
-            roughness: 0.12,
-            transparent: true,
-            opacity: 0.88
+        // Body & lainnya: matte
+        mats.forEach(m => {
+            if (m.metalness !== undefined) m.metalness = 0.15;
+            if (m.roughness !== undefined) m.roughness = 0.75;
+            if (m.emissive) m.emissive.setHex(0x000000);
+            m.needsUpdate = true;
         });
+
+        obj.castShadow = true;
+        obj.receiveShadow = true;
     });
 }
 
@@ -1667,10 +1537,9 @@ function createCarMesh(template, conf) {
     const car = template.clone(true);
     car.scale.setScalar(conf.scale);
     car.position.y = conf.y;
-    tintCarMesh(car, conf.hex, conf.url);
+    tintCarMesh(car, conf.hex);
     return car;
 }
-
 
 function buildCars(templates) {
     cars.forEach(c => { if (c.mesh) scene.remove(c.mesh); });
@@ -1923,7 +1792,7 @@ let lastFrameTime = performance.now();
 // =========================================================
 // SPECTATOR CAMERA STATE
 // =========================================================
-// 0=P1  1=P2  2=P3  3=group  4=wide  5=top-front
+// 0=P1  1=P2  2=P3  3=group  4=wide  5=top  6=rear pack
 let spectatorMode = 0;
 let spectatorTimer = 5;
 let spectatorBlend = 0;
@@ -1941,20 +1810,6 @@ let countdownTimer = 0;
 
 const countdownOverlay = document.getElementById('countdown-overlay');
 const countdownText = document.getElementById('countdown-text');
-
-
-let lastRaceCommentAt = 0;
-const RACE_COMMENT_GAP = 99999; // praktis mati: jangan spam mid/pulse // detik antar komentar mid-race
-
-function sendRaceEvent(event, detail="") {
-    try {
-        fetch("http://127.0.0.1:8765/race-event", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ event, detail })
-        }).catch(() => {});
-    } catch (e) {}
-}
 
 function startCountdown() {
     raceStarted = false;
@@ -2006,7 +1861,6 @@ function updateCountdown(deltaSeconds) {
     } else {
         countdownActive = false;
         raceStarted = true;
-        sendRaceEvent("start");
 
         if (countdownOverlay) {
             countdownOverlay.style.display = 'none';
@@ -2161,10 +2015,6 @@ function animate() {
                     car.finished = true;
 
                     finishedCount++;
-                    if (finishedCount === 1) {
-                        sendRaceEvent("winner", car.name);
-                    }
-                    // finish mobil ke-2..5 tidak di-TTS (kurangi spam)
 
                     // Mobil pertama yang finish memulai
                     // fase kamera finish.
@@ -2414,12 +2264,12 @@ if (spectatorTimer <= 0) {
     // 4 = wide
 
     let nextMode =
-        Math.floor(Math.random() * 6);
+        Math.floor(Math.random() * 5);
 
     // Hindari langsung mengulang mode
     if (nextMode === spectatorMode) {
         nextMode =
-            (nextMode + 1) % 6;
+            (nextMode + 1) % 5;
     }
 
     spectatorMode = nextMode;
@@ -2561,50 +2411,6 @@ else if (spectatorMode === 4) {
     camera.lookAt(pt);
 }
 
-// ---------------------------------------------------------
-// TOP-FRONT (atas depan pack)
-// ---------------------------------------------------------
-else if (spectatorMode === 5) {
-
-    let sum = 0;
-    sortedCars.forEach(c => { sum += c.progress; });
-    const average = sum / sortedCars.length;
-    const prog = average % 1.0;
-
-    const pt = trackCurve.getPointAt(prog);
-    const tang = trackCurve.getTangentAt(prog);
-
-    // Posisi: di depan pack + agak tinggi
-    const wantedPosition = pt.clone()
-        .add(tang.clone().multiplyScalar(18))   // di depan
-        .add(new THREE.Vector3(0, 22, 0));       // tinggi
-
-    // Lihat ke arah pack (sedikit ke belakang dari titik tengah)
-    const lookTarget = pt.clone()
-        .add(tang.clone().multiplyScalar(-4))
-        .add(new THREE.Vector3(0, 1.5, 0));
-
-    camera.position.lerp(wantedPosition, 0.04);
-    camera.lookAt(lookTarget);
-}
-
-    }
-
-    
-    // --- Komentator sepanjang race (throttle) ---
-    if (raceStarted && !isRaceFinished && typeof sendRaceEvent === "function") {
-        const nowSec = performance.now() / 1000;
-        if (nowSec - lastRaceCommentAt >= RACE_COMMENT_GAP) {
-            lastRaceCommentAt = nowSec;
-            const leader = (typeof sortedCars !== "undefined" && sortedCars[0])
-                ? sortedCars[0]
-                : (cars && cars[0]);
-            const name = leader ? leader.name : "";
-            // acak jenis komentar ringan
-            const kinds = ["mid", "pulse", "action"];
-            const kind = kinds[Math.floor(Math.random() * kinds.length)];
-            sendRaceEvent(kind, name);
-        }
     }
 
     updateCarNameLabels();

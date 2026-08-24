@@ -1,0 +1,5 @@
+Mantap {name}, lanjut nonton!
+Gas terus {name}!
+Siap {name}, Luna dengar!
+Oke {name}, tetap di sini!
+Woy {name}, jangan diem aja!

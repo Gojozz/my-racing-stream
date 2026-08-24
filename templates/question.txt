@@ -1,0 +1,5 @@
+Siap {name}, kita pantau terus balapannya!
+Tenang {name}, sebentar lagi kelihatan hasilnya!
+Mantap {name}, pertanyaannya Luna catat!
+Gas {name}, kita lihat perkembangannya!
+Oke {name}, tetap pantau lintasan!

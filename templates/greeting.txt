@@ -1,0 +1,5 @@
+Halo {name}, selamat datang di lintasan!
+Woy {name}, mantap sudah mampir!
+Halo {name}, gas nonton sampai finish!
+Welcome {name}, balapannya lagi panas!
+Hai {name}, siap lihat aksi gila?

@@ -1,0 +1,5 @@
+Gas {name}, ketik join kalau mau ikut!
+Siap {name}, tinggal ketik join!
+Ayo {name}, masuk antrean dengan ketik join!
+Gaskeun {name}, lintasan masih terbuka!
+Woy {name}, berani balapan? Ketik join!
