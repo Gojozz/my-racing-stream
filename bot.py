@@ -195,35 +195,6 @@ last_processed_race = None
 
 
 # =========================================================
-# LUNA AI
-# =========================================================
-
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "").strip()
-
-GROQ_MODEL = os.environ.get(
-    "GROQ_MODEL",
-    "qwen/qwen3.6-27b"
-)
-
-LUNA_SYSTEM_PROMPT = """
-Kamu LUNA, komentator balap live yang cerewet, kocak, dan asal ngomong.
-Bahasa: Indonesia gaul, tidak baku, kayak temen nonton balap bareng.
-Boleh pakai: woy, gas, gila, buset, mantap, waduh, anjay (jangan kasar berlebih), auto, kepleset, ngebut.
-Gaya: komentator overreact, bikin seru, jangan kaku, jangan formal.
-Aturan:
-- Selalu bahasa Indonesia santai
-- Maksimal 1 kalimat pendek (max 16 kata)
-- Jangan bilang kamu AI/bot/model
-- Jangan menghina penonton
-- Kalau balas chat: sebut nama singkat, langsung lucu
-- Kalau komentar balap: seolah lihat mobil ngebut di lintasan
-- PENTING: Jangan keluarkan thinking process terlalu panjang. Langsung jawab 1 kalimat pendek saja.
-"""
-
-
-
-
-# =========================================================
 # TTS
 # =========================================================
 
@@ -466,57 +437,6 @@ def speak(text):
 
 
 # =========================================================
-# GROQ RESPONSE
-# =========================================================
-
-
-
-
-
-
-
-
-def strip_model_thinking(text):
-    """Buang chain-of-thought + ambil jawaban final atau draft."""
-    text = str(text or "")
-
-    # 1. Kalau ada </think>, ambil bagian setelahnya
-    if re.search(r"</think>", text, flags=re.I):
-        parts = re.split(r"</think>", text, flags=re.I)
-        final = parts[-1].strip()
-        if final:
-            final = re.sub(r"</?think>", "", final, flags=re.I)
-            final = re.sub(r"\s+", " ", final).strip()
-            if final:
-                return final
-
-    # 2. Coba ambil draft yang biasa ditulis model di dalam thinking
-    #    Contoh: - "Woy Tanidong, pagi-pagi udah gaspol..."
-    draft_patterns = [
-        r'[-•*]\s*"([^"]{10,120})"',
-        r'Draft[^:]*:\s*"([^"]{10,120})"',
-        r'jawaban[^:]*:\s*"([^"]{10,120})"',
-        r'reply[^:]*:\s*"([^"]{10,120})"',
-        r'"([A-Z][^"]{15,100})"',
-    ]
-    for pat in draft_patterns:
-        m = re.search(pat, text, flags=re.I | re.DOTALL)
-        if m:
-            candidate = m.group(1).strip()
-            # Pastikan kelihatan seperti kalimat Indonesia
-            if any(w in candidate.lower() for w in ["woy", "gas", "mantap", "pagi", "bro", "gila", "buset", "anjay", "lintasan", "balap", "nonton"]):
-                return candidate
-
-    # 3. Kalau masih ada <think> dan tidak ketemu draft → kosong
-    if re.search(r"<think>", text, flags=re.I):
-        return ""
-
-    # 4. Fallback: bersihkan tag saja
-    text = re.sub(r"</?think>", "", text, flags=re.I)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
-
-
 def engagement_loop():
 
     global last_engagement_time
