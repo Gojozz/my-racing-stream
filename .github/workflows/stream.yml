@@ -77,12 +77,6 @@ jobs:
           pactl get-sink-volume stream_sink
           pactl get-sink-mute stream_sink
 
-      - name: Start Local Luna AI
-        run: |
-          echo "===== START LOCAL LUNA AI ====="
-          chmod +x .github/workflows/luna-local-test.sh
-          .github/workflows/luna-local-test.sh
-
       - name: Start Chat Bot
         env:
           YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
@@ -96,14 +90,7 @@ jobs:
           PIPER_BIN: piper
           PIPER_MODEL: ${{ github.workspace }}/piper_models/id_ID-news_tts-medium.onnx
           PULSE_SINK: stream_sink
-          LOCAL_LUNA_URL: http://127.0.0.1:8080/v1
-          LOCAL_LUNA_MODEL: Qwen3-1.7B-Q4_K_M
         run: |
-          echo "===== CHECK LOCAL LUNA AI ====="
-          curl -sf http://127.0.0.1:8080/health
-          echo
-          echo "===== LLAMA PROCESS ====="
-          ps aux | grep '[l]lama-server' || true
 
           echo "===== START CHAT BOT ====="
           python3 -u bot.py > bot.log 2>bot-error.log &
