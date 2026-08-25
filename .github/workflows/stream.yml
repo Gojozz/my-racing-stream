@@ -188,9 +188,9 @@ jobs:
                 -tune zerolatency \
                 -pix_fmt yuv420p \
                 -r 25 \
-                -b:v 2000k \
-                -maxrate 2000k \
-                -bufsize 4000k \
+                -b:v 1600k \
+                -maxrate 1600k \
+                -bufsize 3200k \
                 -g 50 \
                 -c:a aac \
                 -b:a 128k \
@@ -209,31 +209,31 @@ jobs:
                 -thread_queue_size 1024 \
                 -f pulse \
                 -i stream_sink.monitor \
-                -filter_complex "[0:v]split=3[h][fg][bg];[bg]scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,boxblur=20:10[bg];[fg]scale=720:405:flags=fast_bilinear[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2[vout]" \
-                -map "[h]" -map 1:a \
+                -filter_complex "[0:v]split=2[h][v];[v]scale=720:405:flags=fast_bilinear,pad=720:1280:0:437:black[vout];[1:a]aresample=async=1:first_pts=0,asplit=2[a1][a2]" \
+                -map "[h]" -map "[a1]" \
                 -c:v libx264 \
                 -preset ultrafast \
                 -tune zerolatency \
                 -pix_fmt yuv420p \
                 -r 25 \
-                -b:v 2000k \
-                -maxrate 2000k \
-                -bufsize 4000k \
+                -b:v 1600k \
+                -maxrate 1600k \
+                -bufsize 3200k \
                 -g 50 \
                 -c:a aac \
                 -b:a 128k \
                 -ar 44100 \
                 -f flv \
                 "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
-                -map "[vout]" -map 1:a \
+                -map "[vout]" -map "[a2]" \
                 -c:v libx264 \
                 -preset ultrafast \
                 -tune zerolatency \
                 -pix_fmt yuv420p \
                 -r 25 \
-                -b:v 1500k \
-                -maxrate 1500k \
-                -bufsize 3000k \
+                -b:v 1000k \
+                -maxrate 1000k \
+                -bufsize 2000k \
                 -g 50 \
                 -c:a aac \
                 -b:a 128k \
