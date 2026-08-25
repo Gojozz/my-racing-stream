@@ -132,6 +132,7 @@ jobs:
       - name: Start Stream
         env:
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+          YOUTUBE_VERTICAL_STREAM_KEY: ${{ secrets.YOUTUBE_VERTICAL_STREAM_KEY }}
         run: |
           echo "===== START XVFB ====="
           Xvfb :99 -screen 0 1280x720x24 &
@@ -191,20 +192,39 @@ jobs:
               -thread_queue_size 1024 \
               -f pulse \
               -i stream_sink.monitor \
-              -c:v libx264 \
+              -filter_complex "[0:v]split=2[h][v];[v]scale=720:405,pad=720:1280:0:437[vout]" \
+              -map "[h]" \
+              -map 1:a \
+              -c:v:0 libx264 \
               -preset ultrafast \
               -tune zerolatency \
               -pix_fmt yuv420p \
               -r 25 \
-              -b:v 2000k \
-              -maxrate 2000k \
-              -bufsize 4000k \
+              -b:v:0 2000k \
+              -maxrate:v:0 2000k \
+              -bufsize:v:0 4000k \
               -g 50 \
-              -c:a aac \
-              -b:a 128k \
+              -c:a:0 aac \
+              -b:a:0 128k \
               -ar 44100 \
               -f flv \
-              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
+              -map "[vout]" \
+              -map 1:a \
+              -c:v:1 libx264 \
+              -preset ultrafast \
+              -tune zerolatency \
+              -pix_fmt yuv420p \
+              -r 25 \
+              -b:v:1 1500k \
+              -maxrate:v:1 1500k \
+              -bufsize:v:1 3000k \
+              -g 50 \
+              -c:a:1 aac \
+              -b:a:1 128k \
+              -ar 44100 \
+              -f flv \
+              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
 
             echo "FFmpeg terhenti. Reconnect dalam 3 detik..."
             sleep 3
