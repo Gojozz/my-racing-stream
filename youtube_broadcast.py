@@ -30,28 +30,85 @@ def get_credentials():
     )
 
 
-def create_broadcast():
-    youtube = build(
-        "youtube",
-        "v3",
-        credentials=get_credentials(),
+def find_stream_by_key(youtube, stream_key):
+    streams = youtube.liveStreams().list(
+        part="id,snippet,cdn,status",
+        mine=True,
+        maxResults=50,
+    ).execute()
+
+    items = streams.get("items", [])
+    if not items:
+        raise RuntimeError("Tidak ditemukan Live Stream YouTube.")
+
+    for item in items:
+        cdn = item.get("cdn", {})
+        ingestion = cdn.get("ingestionInfo", {})
+        stream_name = ingestion.get("streamName", "")
+        if stream_name == stream_key:
+            return item
+
+    raise RuntimeError(
+        f"Stream key tidak cocok dengan stream YouTube mana pun: {stream_key[:8]}..."
     )
 
-    configured_stream_key = os.environ.get("YOUTUBE_STREAM_KEY", "").strip()
 
-    if not configured_stream_key:
-        raise RuntimeError(
-            "YOUTUBE_STREAM_KEY belum tersedia."
-        )
-
-    print("[YOUTUBE] Membuat broadcast baru...")
+def create_and_bind_broadcast(youtube, title, description, stream_key, label):
+    print(f"[YOUTUBE] [{label}] Membuat broadcast baru...")
 
     broadcast = youtube.liveBroadcasts().insert(
         part="snippet,contentDetails,status",
         body={
             "snippet": {
-                "title": "🏁 AI Racing Battle LIVE | JOIN & DRIVE Your Own Car! 🚗💨",
-                "description": """🏁 AI RACING BATTLE — LIVE!
+                "title": title,
+                "description": description,
+                "scheduledStartTime": datetime.now(timezone.utc).isoformat(),
+            },
+            "status": {
+                "privacyStatus": "public",
+                "selfDeclaredMadeForKids": False,
+            },
+            "contentDetails": {
+                "enableAutoStart": True,
+                "enableAutoStop": True,
+                "enableDvr": True,
+            },
+        },
+    ).execute()
+
+    broadcast_id = broadcast["id"]
+    print(f"[YOUTUBE] [{label}] Broadcast ID: {broadcast_id}")
+
+    print(f"[YOUTUBE] [{label}] Mencari live stream...")
+    stream = find_stream_by_key(youtube, stream_key)
+    stream_id = stream["id"]
+    stream_status = stream.get("status", {}).get("streamStatus", "unknown")
+
+    print(f"[YOUTUBE] [{label}] Stream ID yang cocok: {stream_id}")
+    print(f"[YOUTUBE] [{label}] Stream status sebelum FFmpeg: {stream_status}")
+
+    print(f"[YOUTUBE] [{label}] Menghubungkan broadcast ke stream yang tepat...")
+    bound = youtube.liveBroadcasts().bind(
+        part="id,contentDetails,status",
+        id=broadcast_id,
+        streamId=stream_id,
+    ).execute()
+
+    bound_stream_id = bound.get("contentDetails", {}).get("boundStreamId", "")
+    lifecycle = bound.get("status", {}).get("lifeCycleStatus", "unknown")
+
+    if bound_stream_id != stream_id:
+        raise RuntimeError(
+            f"[{label}] Bind gagal: boundStreamId={bound_stream_id}, expected={stream_id}"
+        )
+
+    print(f"[YOUTUBE] [{label}] Bound Stream ID: {bound_stream_id}")
+    print(f"[YOUTUBE] [{label}] Lifecycle: {lifecycle}")
+
+    return broadcast_id, stream_id
+
+
+DESCRIPTION = """🏁 AI RACING BATTLE — LIVE!
 
 This is not just a racing stream — YOU can join the race and control your own car! 🏎️💨
 
@@ -105,102 +162,64 @@ Fight for the win.
 
 Don't miss the next race and your chance to get on the track!
 
-#AIRacing #InteractiveRacing #SimRacing #RacingGame #LiveRacing #AIRacingBattle #PlayWithViewers""",
-                "scheduledStartTime": datetime.now(timezone.utc).isoformat(),
-            },
-            "status": {
-                "privacyStatus": "public",
-                "selfDeclaredMadeForKids": False,
-            },
-            "contentDetails": {
-                "enableAutoStart": True,
-                "enableAutoStop": True,
-                "enableDvr": True,
-            },
-        },
-    ).execute()
+#AIRacing #InteractiveRacing #SimRacing #RacingGame #LiveRacing #AIRacingBattle #PlayWithViewers"""
 
-    broadcast_id = broadcast["id"]
 
-    print(f"[YOUTUBE] Broadcast ID: {broadcast_id}")
-
-    print("[YOUTUBE] Mencari live stream...")
-
-    streams = youtube.liveStreams().list(
-        part="id,snippet,cdn,status",
-        mine=True,
-        maxResults=50,
-    ).execute()
-
-    items = streams.get("items", [])
-
-    if not items:
-        raise RuntimeError(
-            "Tidak ditemukan Live Stream YouTube."
-        )
-
-    stream = None
-
-    for item in items:
-        cdn = item.get("cdn", {})
-        ingestion = cdn.get("ingestionInfo", {})
-        stream_name = ingestion.get("streamName", "")
-
-        if stream_name == configured_stream_key:
-            stream = item
-            break
-
-    if stream is None:
-        raise RuntimeError(
-            "YOUTUBE_STREAM_KEY tidak cocok dengan stream YouTube mana pun."
-        )
-
-    stream_id = stream["id"]
-    stream_status = stream.get("status", {}).get(
-        "streamStatus", "unknown"
+def create_broadcasts():
+    youtube = build(
+        "youtube",
+        "v3",
+        credentials=get_credentials(),
     )
 
-    print(f"[YOUTUBE] Stream ID yang cocok: {stream_id}")
-    print(f"[YOUTUBE] Stream status sebelum FFmpeg: {stream_status}")
+    landscape_key = os.environ.get("YOUTUBE_STREAM_KEY", "").strip()
+    vertical_key = os.environ.get("YOUTUBE_VERTICAL_STREAM_KEY", "").strip()
 
-    print("[YOUTUBE] Menghubungkan broadcast ke stream yang tepat...")
+    if not landscape_key:
+        raise RuntimeError("YOUTUBE_STREAM_KEY belum tersedia.")
 
-    bound = youtube.liveBroadcasts().bind(
-        part="id,contentDetails,status",
-        id=broadcast_id,
-        streamId=stream_id,
-    ).execute()
-
-    bound_stream_id = bound.get(
-        "contentDetails", {}
-    ).get("boundStreamId", "")
-
-    lifecycle = bound.get(
-        "status", {}
-    ).get("lifeCycleStatus", "unknown")
-
-    if bound_stream_id != stream_id:
-        raise RuntimeError(
-            f"Bind gagal: boundStreamId={bound_stream_id}, expected={stream_id}"
-        )
-
-    print(f"[YOUTUBE] Bound Stream ID: {bound_stream_id}")
-    print(f"[YOUTUBE] Lifecycle: {lifecycle}")
+    landscape_title = "🏁 AI Racing Battle LIVE | JOIN & DRIVE Your Own Car! 🚗💨"
+    land_broadcast_id, land_stream_id = create_and_bind_broadcast(
+        youtube,
+        landscape_title,
+        DESCRIPTION,
+        landscape_key,
+        "LANDSCAPE",
+    )
 
     print("========================================")
-    print("YOUTUBE BROADCAST SIAP")
-    print(f"VIDEO_ID={broadcast_id}")
-    print(f"STREAM_ID={stream_id}")
+    print("YOUTUBE LANDSCAPE BROADCAST SIAP")
+    print(f"VIDEO_ID={land_broadcast_id}")
+    print(f"STREAM_ID={land_stream_id}")
     print("AUTO START=TRUE")
     print("AUTO STOP=TRUE")
     print("========================================")
+    print(land_broadcast_id)
 
-    print(broadcast_id)
+    if vertical_key:
+        vertical_title = "🏁 AI Racing Battle VERTICAL | JOIN & DRIVE! 🚗💨"
+        vert_broadcast_id, vert_stream_id = create_and_bind_broadcast(
+            youtube,
+            vertical_title,
+            DESCRIPTION,
+            vertical_key,
+            "VERTICAL",
+        )
+
+        print("========================================")
+        print("YOUTUBE VERTICAL BROADCAST SIAP")
+        print(f"VERTICAL_VIDEO_ID={vert_broadcast_id}")
+        print(f"VERTICAL_STREAM_ID={vert_stream_id}")
+        print("AUTO START=TRUE")
+        print("AUTO STOP=TRUE")
+        print("========================================")
+    else:
+        print("[YOUTUBE] YOUTUBE_VERTICAL_STREAM_KEY tidak ada — skip vertical broadcast.")
 
 
 if __name__ == "__main__":
     try:
-        create_broadcast()
+        create_broadcasts()
     except Exception as e:
         print(f"[YOUTUBE BROADCAST ERROR] {e}")
         sys.exit(1)

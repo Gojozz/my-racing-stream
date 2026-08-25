@@ -30,6 +30,7 @@ jobs:
             libgl1-mesa-dri \
             python3-pip \
             wget
+
       - name: Install Python dependencies
         run: |
           python3 -m pip install --break-system-packages pytchat httpx google-api-python-client google-auth google-auth-httplib2
@@ -38,45 +39,29 @@ jobs:
         run: |
           echo "===== INSTALL PIPER TTS ====="
           python3 -m pip install --break-system-packages piper-tts
-
-          echo "===== CEK PIPER ====="
           command -v piper
           piper --help | head -10
-
-          echo "===== DOWNLOAD VOICE INDONESIA ====="
           mkdir -p piper_models
           cd piper_models
-
           wget -q --show-progress \
             https://huggingface.co/rhasspy/piper-voices/resolve/main/id/id_ID/news_tts/medium/id_ID-news_tts-medium.onnx
-
           wget -q --show-progress \
             https://huggingface.co/rhasspy/piper-voices/resolve/main/id/id_ID/news_tts/medium/id_ID-news_tts-medium.onnx.json
-
           cd ..
-
-          echo "===== CEK MODEL PIPER ====="
           ls -lh piper_models/id_ID-news_tts-medium.*
 
       - name: Start PulseAudio
         run: |
           echo "===== START PULSEAUDIO ====="
           pulseaudio --start --system=false --exit-idle-time=-1
-
-          echo "===== CREATE STREAM SINK ====="
           pactl load-module module-null-sink \
             sink_name=stream_sink \
             sink_properties=device.description=StreamSink
-
           pactl set-sink-mute stream_sink 0
           pactl set-sink-volume stream_sink 100%
           pactl set-default-sink stream_sink
-
-          echo "===== PULSEAUDIO CHECK ====="
           pactl info
           pactl list short sinks
-          pactl get-sink-volume stream_sink
-          pactl get-sink-mute stream_sink
 
       - name: Create YouTube Broadcast
         env:
@@ -84,22 +69,25 @@ jobs:
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
+          YOUTUBE_VERTICAL_STREAM_KEY: ${{ secrets.YOUTUBE_VERTICAL_STREAM_KEY }}
         run: |
-          echo "===== CREATE YOUTUBE BROADCAST ====="
+          echo "===== CREATE YOUTUBE BROADCAST (LANDSCAPE + VERTICAL) ====="
           python3 youtube_broadcast.py | tee youtube-broadcast.log
-
           VIDEO_ID=$(grep '^VIDEO_ID=' youtube-broadcast.log | tail -1 | cut -d= -f2)
-
           if [ -z "$VIDEO_ID" ]; then
             echo "ERROR: VIDEO_ID tidak ditemukan."
             exit 1
           fi
-
           echo "VIDEO_ID=$VIDEO_ID"
           echo "YOUTUBE_LIVE_ID=$VIDEO_ID" >> "$GITHUB_ENV"
-
+          VERTICAL_VIDEO_ID=$(grep '^VERTICAL_VIDEO_ID=' youtube-broadcast.log | tail -1 | cut -d= -f2 || true)
+          if [ -n "$VERTICAL_VIDEO_ID" ]; then
+            echo "VERTICAL_VIDEO_ID=$VERTICAL_VIDEO_ID"
+            echo "YOUTUBE_VERTICAL_LIVE_ID=$VERTICAL_VIDEO_ID" >> "$GITHUB_ENV"
+          else
+            echo "VERTICAL_VIDEO_ID tidak ada (vertical broadcast di-skip atau gagal)."
+          fi
           echo "===== YOUTUBE BROADCAST READY ====="
-          echo "YOUTUBE_LIVE_ID=$VIDEO_ID"
 
       - name: Start Chat Bot
         env:
@@ -113,19 +101,14 @@ jobs:
           echo "===== START CHAT BOT ====="
           python3 -u bot.py > bot.log 2>bot-error.log &
           sleep 3
-          echo "===== BOT PROCESS ====="
           ps aux | grep '[p]ython3 bot.py' || true
-          echo "===== BOT LOG ====="
           cat bot.log 2>/dev/null || true
-          echo "===== BOT ERROR ====="
           cat bot-error.log 2>/dev/null || true
 
       - name: Check dependencies
         run: |
-          echo "===== FFMPEG ====="
           command -v ffmpeg
           ffmpeg -version | head -1
-          echo "===== CHROMIUM ====="
           command -v chromium-browser || command -v chromium
           chromium --version || chromium-browser --version
 
@@ -143,7 +126,6 @@ jobs:
           sudo mkdir -p /etc/chromium-browser/policies/managed
           printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium/policies/managed/stream-policy.json > /dev/null
           printf '%s\n' '{' '  "TranslateEnabled": false' '}' | sudo tee /etc/chromium-browser/policies/managed/stream-policy.json > /dev/null
-
           sleep 2
 
           echo "===== START HTTP SERVER ====="
@@ -170,11 +152,7 @@ jobs:
             http://127.0.0.1:8000/index.html &
 
           sleep 10
-
-          echo "===== CHROMIUM PROCESS ====="
           ps aux | grep chromium | grep -v grep || true
-
-          echo "===== SCREEN TEST ====="
           import -display :99 -window root /tmp/stream-screen.png
           file /tmp/stream-screen.png
 
@@ -182,49 +160,78 @@ jobs:
           set +e
 
           while true; do
-            ffmpeg \
-              -draw_mouse 0 \
-              -thread_queue_size 1024 \
-              -f x11grab \
-              -video_size 1280x720 \
-              -framerate 25 \
-              -i :99.0 \
-              -thread_queue_size 1024 \
-              -f pulse \
-              -i stream_sink.monitor \
-              -filter_complex "[0:v]split=2[h][v];[v]scale=720:405,pad=720:1280:0:437[vout]" \
-              -map "[h]" \
-              -map 1:a \
-              -c:v:0 libx264 \
-              -preset ultrafast \
-              -tune zerolatency \
-              -pix_fmt yuv420p \
-              -r 25 \
-              -b:v:0 2000k \
-              -maxrate:v:0 2000k \
-              -bufsize:v:0 4000k \
-              -g 50 \
-              -c:a:0 aac \
-              -b:a:0 128k \
-              -ar 44100 \
-              -f flv \
-              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
-              -map "[vout]" \
-              -map 1:a \
-              -c:v libx264 \
-              -preset ultrafast \
-              -tune zerolatency \
-              -pix_fmt yuv420p \
-              -r 25 \
-              -b:v 1500k \
-              -maxrate 1500k \
-              -bufsize 3000k \
-              -g 50 \
-              -c:a aac \
-              -b:a 128k \
-              -ar 44100 \
-              -f flv \
-              "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
+            if [ -z "$YOUTUBE_VERTICAL_STREAM_KEY" ]; then
+              echo "WARNING: YOUTUBE_VERTICAL_STREAM_KEY kosong — stream landscape saja."
+              ffmpeg \
+                -draw_mouse 0 \
+                -thread_queue_size 1024 \
+                -f x11grab \
+                -video_size 1280x720 \
+                -framerate 25 \
+                -i :99.0 \
+                -thread_queue_size 1024 \
+                -f pulse \
+                -i stream_sink.monitor \
+                -map 0:v \
+                -map 1:a \
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 2000k \
+                -maxrate 2000k \
+                -bufsize 4000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+            else
+              ffmpeg \
+                -hide_banner \
+                -draw_mouse 0 \
+                -thread_queue_size 1024 \
+                -f x11grab \
+                -video_size 1280x720 \
+                -framerate 25 \
+                -i :99.0 \
+                -thread_queue_size 1024 \
+                -f pulse \
+                -i stream_sink.monitor \
+                -filter_complex "[0:v]split=2[h][v];[v]scale=720:405:flags=fast_bilinear,pad=720:1280:0:437:black[vout]" \
+                -map "[h]" -map 1:a \
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 2000k \
+                -maxrate 2000k \
+                -bufsize 4000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
+                -map "[vout]" -map 1:a \
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 1500k \
+                -maxrate 1500k \
+                -bufsize 3000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
+            fi
 
             echo "FFmpeg terhenti. Reconnect dalam 3 detik..."
             sleep 3
@@ -241,3 +248,4 @@ jobs:
             bot.log
             bot-error.log
             chat_state.json
+            youtube-broadcast.log
