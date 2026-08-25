@@ -200,7 +200,7 @@ jobs:
                 -thread_queue_size 1024 \
                 -f pulse \
                 -i stream_sink.monitor \
-                -filter_complex "[0:v]split=2[h][v];[v]scale=720:405:flags=fast_bilinear,pad=720:1280:0:437:black[vout]" \
+                -filter_complex "[0:v]split=2[h][v];[v]scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280[vout]" \
                 -map "[h]" -map 1:a \
                 -c:v libx264 \
                 -preset ultrafast \
