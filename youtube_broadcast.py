@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timezone
 
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -44,6 +45,7 @@ def create_broadcast():
             "snippet": {
                 "title": "AI Racing Live",
                 "description": "AI Racing Live Stream",
+                "scheduledStartTime": datetime.now(timezone.utc).isoformat(),
             },
             "status": {
                 "privacyStatus": "public",
