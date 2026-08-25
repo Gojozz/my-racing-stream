@@ -117,13 +117,10 @@ jobs:
           YOUTUBE_STREAM_KEY: ${{ secrets.YOUTUBE_STREAM_KEY }}
           YOUTUBE_VERTICAL_STREAM_KEY: ${{ secrets.YOUTUBE_VERTICAL_STREAM_KEY }}
         run: |
-          echo "===== START XVFB LANDSCAPE :99 (1280x720) ====="
+          echo "===== START XVFB :99 (1280x720) ====="
           Xvfb :99 -screen 0 1280x720x24 &
-          sleep 2
-
-          echo "===== START XVFB VERTICAL :98 (720x1280) ====="
-          Xvfb :98 -screen 0 720x1280x24 &
-          sleep 2
+          export DISPLAY=:99
+          sleep 3
 
           sudo mkdir -p /etc/chromium/policies/managed
           sudo mkdir -p /etc/chromium-browser/policies/managed
@@ -135,8 +132,8 @@ jobs:
           python3 -m http.server 8000 > http.log 2>&1 &
           sleep 3
 
-          echo "===== START CHROMIUM LANDSCAPE ====="
-          DISPLAY=:99 chromium-browser \
+          echo "===== START CHROMIUM (landscape only) ====="
+          chromium-browser \
             --no-sandbox \
             --disable-dev-shm-usage \
             --disable-gpu-sandbox \
@@ -151,40 +148,26 @@ jobs:
             --disable-features=Translate,TranslateUI \
             --disable-translate \
             --lang=id-ID \
-            --user-data-dir=/tmp/chromium-profile-land \
-            http://127.0.0.1:8000/index.html &
-
-          echo "===== START CHROMIUM VERTICAL ====="
-          DISPLAY=:98 chromium-browser \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --disable-gpu-sandbox \
-            --ignore-gpu-blocklist \
-            --enable-webgl \
-            --use-angle=swiftshader \
-            --enable-unsafe-swiftshader \
-            --window-size=720,1280 \
-            --kiosk \
-            --no-first-run \
-            --autoplay-policy=no-user-gesture-required \
-            --disable-features=Translate,TranslateUI \
-            --disable-translate \
-            --lang=id-ID \
-            --user-data-dir=/tmp/chromium-profile-vert \
+            --user-data-dir=/tmp/chromium-profile \
             http://127.0.0.1:8000/index.html &
 
           sleep 12
 
-          echo "===== CHROMIUM PROCESSES ====="
+          echo "===== CHROMIUM PROCESS ====="
           ps aux | grep chromium | grep -v grep || true
 
           echo "===== SCREEN TEST ====="
-          import -display :99 -window root /tmp/stream-screen-land.png || true
-          import -display :98 -window root /tmp/stream-screen-vert.png || true
-          file /tmp/stream-screen-land.png /tmp/stream-screen-vert.png || true
+          import -display :99 -window root /tmp/stream-screen.png || true
+          file /tmp/stream-screen.png || true
 
-          echo "===== START FFMPEG LOOP (dual input) ====="
+          echo "===== START FFMPEG LOOP (landscape + vertical blur) ====="
           set +e
+
+          # Vertical blur:
+          # - bg: scale penuh 720x1280 + boxblur
+          # - fg: scale 720x405 (16:9 utuh, panel tidak potong)
+          # - overlay tengah
+          # 1x Chromium, 25fps kedua output
 
           while true; do
             if [ -z "$YOUTUBE_VERTICAL_STREAM_KEY" ]; then
@@ -192,34 +175,71 @@ jobs:
               ffmpeg \
                 -draw_mouse 0 \
                 -thread_queue_size 1024 \
-                -f x11grab -video_size 1280x720 -framerate 20 -i :99.0 \
+                -f x11grab \
+                -video_size 1280x720 \
+                -framerate 25 \
+                -i :99.0 \
                 -thread_queue_size 1024 \
-                -f pulse -i stream_sink.monitor \
+                -f pulse \
+                -i stream_sink.monitor \
                 -map 0:v -map 1:a \
-                -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
-                -r 20 -b:v 2000k -maxrate 2000k -bufsize 4000k -g 40 \
-                -c:a aac -b:a 128k -ar 44100 \
-                -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 2000k \
+                -maxrate 2000k \
+                -bufsize 4000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
             else
               ffmpeg \
                 -hide_banner \
                 -draw_mouse 0 \
                 -thread_queue_size 1024 \
-                -f x11grab -video_size 1280x720 -framerate 20 -i :99.0 \
+                -f x11grab \
+                -video_size 1280x720 \
+                -framerate 25 \
+                -i :99.0 \
                 -thread_queue_size 1024 \
-                -f x11grab -video_size 720x1280 -framerate 20 -i :98.0 \
-                -thread_queue_size 1024 \
-                -f pulse -i stream_sink.monitor \
-                -map 0:v -map 2:a \
-                -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
-                -r 20 -b:v 2000k -maxrate 2000k -bufsize 4000k -g 40 \
-                -c:a aac -b:a 128k -ar 44100 \
-                -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
-                -map 1:v -map 2:a \
-                -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
-                -r 20 -b:v 1500k -maxrate 1500k -bufsize 3000k -g 40 \
-                -c:a aac -b:a 128k -ar 44100 \
-                -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
+                -f pulse \
+                -i stream_sink.monitor \
+                -filter_complex "[0:v]split=3[h][fg][bg];[bg]scale=720:1280:force_original_aspect_ratio=increase,crop=720:1280,boxblur=20:10[bg];[fg]scale=720:405:flags=fast_bilinear[fg];[bg][fg]overlay=(W-w)/2:(H-h)/2[vout]" \
+                -map "[h]" -map 1:a \
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 2000k \
+                -maxrate 2000k \
+                -bufsize 4000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
+                -map "[vout]" -map 1:a \
+                -c:v libx264 \
+                -preset ultrafast \
+                -tune zerolatency \
+                -pix_fmt yuv420p \
+                -r 25 \
+                -b:v 1500k \
+                -maxrate 1500k \
+                -bufsize 3000k \
+                -g 50 \
+                -c:a aac \
+                -b:a 128k \
+                -ar 44100 \
+                -f flv \
+                "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
             fi
 
             echo "FFmpeg terhenti. Reconnect dalam 3 detik..."
