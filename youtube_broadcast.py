@@ -43,8 +43,62 @@ def create_broadcast():
         part="snippet,contentDetails,status",
         body={
             "snippet": {
-                "title": "AI Racing Live",
-                "description": "AI Racing Live Stream",
+                "title": "🏁 AI Racing Battle LIVE | JOIN & DRIVE Your Own Car! 🚗💨",
+                "description": """🏁 AI RACING BATTLE — LIVE!
+
+This is not just a racing stream — YOU can join the race and control your own car! 🏎️💨
+
+Race against AI drivers, fight for position, use Nitro, stop, start, and try to reach the finish line first!
+
+🎮 HOW TO JOIN THE RACE
+
+Want to play?
+
+Type:
+
+JOIN
+
+in the live chat to enter the race.
+
+🚗 RACING COMMANDS
+
+JOIN
+→ Join the current race.
+
+N
+→ Activate Nitro and boost your car! ⚡
+
+S
+→ Stop your car.
+
+G
+→ Start your car again and continue racing.
+
+🏆 YOUR GOAL
+
+Join the race, control your car, battle against AI drivers and other players, use your Nitro at the right moment, and fight for the podium!
+
+🔥 THIS IS INTERACTIVE RACING
+
+You're not just watching the race.
+
+YOU ARE PART OF THE RACE.
+
+Your commands control your car during the live stream.
+
+🏁 CAN YOU BEAT THE AI?
+
+Join the chat.
+Enter the race.
+Take control.
+Use your Nitro.
+Fight for the win.
+
+🔔 SUBSCRIBE & TURN ON NOTIFICATIONS
+
+Don't miss the next race and your chance to get on the track!
+
+#AIRacing #InteractiveRacing #SimRacing #RacingGame #LiveRacing #AIRacingBattle #PlayWithViewers""",
                 "scheduledStartTime": datetime.now(timezone.utc).isoformat(),
             },
             "status": {
