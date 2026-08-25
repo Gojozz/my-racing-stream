@@ -192,12 +192,12 @@ jobs:
               ffmpeg \
                 -draw_mouse 0 \
                 -thread_queue_size 1024 \
-                -f x11grab -video_size 1280x720 -framerate 25 -i :99.0 \
+                -f x11grab -video_size 1280x720 -framerate 20 -i :99.0 \
                 -thread_queue_size 1024 \
                 -f pulse -i stream_sink.monitor \
                 -map 0:v -map 1:a \
                 -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
-                -r 25 -b:v 2000k -maxrate 2000k -bufsize 4000k -g 50 \
+                -r 20 -b:v 2000k -maxrate 2000k -bufsize 4000k -g 40 \
                 -c:a aac -b:a 128k -ar 44100 \
                 -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY"
             else
@@ -205,19 +205,19 @@ jobs:
                 -hide_banner \
                 -draw_mouse 0 \
                 -thread_queue_size 1024 \
-                -f x11grab -video_size 1280x720 -framerate 25 -i :99.0 \
+                -f x11grab -video_size 1280x720 -framerate 20 -i :99.0 \
                 -thread_queue_size 1024 \
-                -f x11grab -video_size 720x1280 -framerate 25 -i :98.0 \
+                -f x11grab -video_size 720x1280 -framerate 20 -i :98.0 \
                 -thread_queue_size 1024 \
                 -f pulse -i stream_sink.monitor \
                 -map 0:v -map 2:a \
                 -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
-                -r 25 -b:v 2000k -maxrate 2000k -bufsize 4000k -g 50 \
+                -r 20 -b:v 2000k -maxrate 2000k -bufsize 4000k -g 40 \
                 -c:a aac -b:a 128k -ar 44100 \
                 -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
                 -map 1:v -map 2:a \
                 -c:v libx264 -preset ultrafast -tune zerolatency -pix_fmt yuv420p \
-                -r 25 -b:v 1500k -maxrate 1500k -bufsize 3000k -g 50 \
+                -r 20 -b:v 1500k -maxrate 1500k -bufsize 3000k -g 40 \
                 -c:a aac -b:a 128k -ar 44100 \
                 -f flv "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
             fi
