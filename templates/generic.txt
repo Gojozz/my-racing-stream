@@ -1,5 +1,100 @@
-Mantap {name}, lanjut nonton!
-Gas terus {name}!
-Siap {name}, Luna dengar!
-Oke {name}, tetap di sini!
-Woy {name}, jangan diem aja!
+Mantap {name}, Luna masih pantau balapannya nih!
+Mantap {name}, Luna masih pantau balapannya ya!
+Mantap {name}, Luna masih pantau balapannya bro!
+Mantap {name}, Luna masih pantau balapannya di sini!
+Mantap {name}, Luna masih pantau balapannya terus!
+Mantap {name}, Luna masih pantau balapannya hari ini!
+Mantap {name}, Luna masih pantau balapannya sekarang!
+Mantap {name}, Luna masih pantau balapannya mantap!
+Mantap {name}, Luna masih pantau balapannya wkwkwk!
+Mantap {name}, Luna masih pantau balapannya anjay!
+Mantap {name}, jangan sampai ketinggalan aksi nih!
+Mantap {name}, jangan sampai ketinggalan aksi ya!
+Mantap {name}, jangan sampai ketinggalan aksi bro!
+Mantap {name}, jangan sampai ketinggalan aksi di sini!
+Mantap {name}, jangan sampai ketinggalan aksi terus!
+Mantap {name}, jangan sampai ketinggalan aksi hari ini!
+Mantap {name}, jangan sampai ketinggalan aksi sekarang!
+Mantap {name}, jangan sampai ketinggalan aksi mantap!
+Mantap {name}, jangan sampai ketinggalan aksi wkwkwk!
+Mantap {name}, jangan sampai ketinggalan aksi anjay!
+Mantap {name}, suasana live makin rame nih!
+Mantap {name}, suasana live makin rame ya!
+Mantap {name}, suasana live makin rame bro!
+Mantap {name}, suasana live makin rame di sini!
+Mantap {name}, suasana live makin rame terus!
+Mantap {name}, suasana live makin rame hari ini!
+Mantap {name}, suasana live makin rame sekarang!
+Mantap {name}, suasana live makin rame mantap!
+Mantap {name}, suasana live makin rame wkwkwk!
+Mantap {name}, suasana live makin rame anjay!
+Mantap {name}, kita lanjut lihat siapa yang unggul nih!
+Mantap {name}, kita lanjut lihat siapa yang unggul ya!
+Mantap {name}, kita lanjut lihat siapa yang unggul bro!
+Mantap {name}, kita lanjut lihat siapa yang unggul di sini!
+Mantap {name}, kita lanjut lihat siapa yang unggul terus!
+Mantap {name}, kita lanjut lihat siapa yang unggul hari ini!
+Mantap {name}, kita lanjut lihat siapa yang unggul sekarang!
+Mantap {name}, kita lanjut lihat siapa yang unggul mantap!
+Mantap {name}, kita lanjut lihat siapa yang unggul wkwkwk!
+Mantap {name}, kita lanjut lihat siapa yang unggul anjay!
+Mantap {name}, lintasan masih penuh kejutan nih!
+Mantap {name}, lintasan masih penuh kejutan ya!
+Mantap {name}, lintasan masih penuh kejutan bro!
+Mantap {name}, lintasan masih penuh kejutan di sini!
+Mantap {name}, lintasan masih penuh kejutan terus!
+Mantap {name}, lintasan masih penuh kejutan hari ini!
+Mantap {name}, lintasan masih penuh kejutan sekarang!
+Mantap {name}, lintasan masih penuh kejutan mantap!
+Mantap {name}, lintasan masih penuh kejutan wkwkwk!
+Mantap {name}, lintasan masih penuh kejutan anjay!
+Mantap {name}, balapannya belum selesai nih!
+Mantap {name}, balapannya belum selesai ya!
+Mantap {name}, balapannya belum selesai bro!
+Mantap {name}, balapannya belum selesai di sini!
+Mantap {name}, balapannya belum selesai terus!
+Mantap {name}, balapannya belum selesai hari ini!
+Mantap {name}, balapannya belum selesai sekarang!
+Mantap {name}, balapannya belum selesai mantap!
+Mantap {name}, balapannya belum selesai wkwkwk!
+Mantap {name}, balapannya belum selesai anjay!
+Mantap {name}, aksi berikutnya bisa makin gila nih!
+Mantap {name}, aksi berikutnya bisa makin gila ya!
+Mantap {name}, aksi berikutnya bisa makin gila bro!
+Mantap {name}, aksi berikutnya bisa makin gila di sini!
+Mantap {name}, aksi berikutnya bisa makin gila terus!
+Mantap {name}, aksi berikutnya bisa makin gila hari ini!
+Mantap {name}, aksi berikutnya bisa makin gila sekarang!
+Mantap {name}, aksi berikutnya bisa makin gila mantap!
+Mantap {name}, aksi berikutnya bisa makin gila wkwkwk!
+Mantap {name}, aksi berikutnya bisa makin gila anjay!
+Mantap {name}, tetap pantau sampai finish nih!
+Mantap {name}, tetap pantau sampai finish ya!
+Mantap {name}, tetap pantau sampai finish bro!
+Mantap {name}, tetap pantau sampai finish di sini!
+Mantap {name}, tetap pantau sampai finish terus!
+Mantap {name}, tetap pantau sampai finish hari ini!
+Mantap {name}, tetap pantau sampai finish sekarang!
+Mantap {name}, tetap pantau sampai finish mantap!
+Mantap {name}, tetap pantau sampai finish wkwkwk!
+Mantap {name}, tetap pantau sampai finish anjay!
+Mantap {name}, persaingan masih terbuka nih!
+Mantap {name}, persaingan masih terbuka ya!
+Mantap {name}, persaingan masih terbuka bro!
+Mantap {name}, persaingan masih terbuka di sini!
+Mantap {name}, persaingan masih terbuka terus!
+Mantap {name}, persaingan masih terbuka hari ini!
+Mantap {name}, persaingan masih terbuka sekarang!
+Mantap {name}, persaingan masih terbuka mantap!
+Mantap {name}, persaingan masih terbuka wkwkwk!
+Mantap {name}, persaingan masih terbuka anjay!
+Mantap {name}, semuanya masih bisa terjadi nih!
+Mantap {name}, semuanya masih bisa terjadi ya!
+Mantap {name}, semuanya masih bisa terjadi bro!
+Mantap {name}, semuanya masih bisa terjadi di sini!
+Mantap {name}, semuanya masih bisa terjadi terus!
+Mantap {name}, semuanya masih bisa terjadi hari ini!
+Mantap {name}, semuanya masih bisa terjadi sekarang!
+Mantap {name}, semuanya masih bisa terjadi mantap!
+Mantap {name}, semuanya masih bisa terjadi wkwkwk!
+Mantap {name}, semuanya masih bisa terjadi anjay!

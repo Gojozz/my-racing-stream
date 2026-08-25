@@ -1,5 +1,100 @@
-Siap {name}, kita pantau terus balapannya!
-Tenang {name}, sebentar lagi kelihatan hasilnya!
-Mantap {name}, pertanyaannya Luna catat!
-Gas {name}, kita lihat perkembangannya!
-Oke {name}, tetap pantau lintasan!
+Siap {name}, Luna pantau terus balapannya ya!
+Siap {name}, Luna pantau terus balapannya bro!
+Siap {name}, Luna pantau terus balapannya sekarang!
+Siap {name}, Luna pantau terus balapannya dulu!
+Siap {name}, Luna pantau terus balapannya wkwkwk!
+Siap {name}, Luna pantau terus balapannya anjay!
+Siap {name}, Luna pantau terus balapannya tetap pantau!
+Siap {name}, Luna pantau terus balapannya gas!
+Siap {name}, Luna pantau terus balapannya santai!
+Siap {name}, Luna pantau terus balapannya mantap!
+Siap {name}, kita lihat perkembangan race ya!
+Siap {name}, kita lihat perkembangan race bro!
+Siap {name}, kita lihat perkembangan race sekarang!
+Siap {name}, kita lihat perkembangan race dulu!
+Siap {name}, kita lihat perkembangan race wkwkwk!
+Siap {name}, kita lihat perkembangan race anjay!
+Siap {name}, kita lihat perkembangan race tetap pantau!
+Siap {name}, kita lihat perkembangan race gas!
+Siap {name}, kita lihat perkembangan race santai!
+Siap {name}, kita lihat perkembangan race mantap!
+Siap {name}, jawabannya bakal kelihatan di lintasan ya!
+Siap {name}, jawabannya bakal kelihatan di lintasan bro!
+Siap {name}, jawabannya bakal kelihatan di lintasan sekarang!
+Siap {name}, jawabannya bakal kelihatan di lintasan dulu!
+Siap {name}, jawabannya bakal kelihatan di lintasan wkwkwk!
+Siap {name}, jawabannya bakal kelihatan di lintasan anjay!
+Siap {name}, jawabannya bakal kelihatan di lintasan tetap pantau!
+Siap {name}, jawabannya bakal kelihatan di lintasan gas!
+Siap {name}, jawabannya bakal kelihatan di lintasan santai!
+Siap {name}, jawabannya bakal kelihatan di lintasan mantap!
+Siap {name}, posisinya masih bisa berubah ya!
+Siap {name}, posisinya masih bisa berubah bro!
+Siap {name}, posisinya masih bisa berubah sekarang!
+Siap {name}, posisinya masih bisa berubah dulu!
+Siap {name}, posisinya masih bisa berubah wkwkwk!
+Siap {name}, posisinya masih bisa berubah anjay!
+Siap {name}, posisinya masih bisa berubah tetap pantau!
+Siap {name}, posisinya masih bisa berubah gas!
+Siap {name}, posisinya masih bisa berubah santai!
+Siap {name}, posisinya masih bisa berubah mantap!
+Siap {name}, kita tunggu momen berikutnya ya!
+Siap {name}, kita tunggu momen berikutnya bro!
+Siap {name}, kita tunggu momen berikutnya sekarang!
+Siap {name}, kita tunggu momen berikutnya dulu!
+Siap {name}, kita tunggu momen berikutnya wkwkwk!
+Siap {name}, kita tunggu momen berikutnya anjay!
+Siap {name}, kita tunggu momen berikutnya tetap pantau!
+Siap {name}, kita tunggu momen berikutnya gas!
+Siap {name}, kita tunggu momen berikutnya santai!
+Siap {name}, kita tunggu momen berikutnya mantap!
+Siap {name}, sebentar lagi kita lihat hasilnya ya!
+Siap {name}, sebentar lagi kita lihat hasilnya bro!
+Siap {name}, sebentar lagi kita lihat hasilnya sekarang!
+Siap {name}, sebentar lagi kita lihat hasilnya dulu!
+Siap {name}, sebentar lagi kita lihat hasilnya wkwkwk!
+Siap {name}, sebentar lagi kita lihat hasilnya anjay!
+Siap {name}, sebentar lagi kita lihat hasilnya tetap pantau!
+Siap {name}, sebentar lagi kita lihat hasilnya gas!
+Siap {name}, sebentar lagi kita lihat hasilnya santai!
+Siap {name}, sebentar lagi kita lihat hasilnya mantap!
+Siap {name}, persaingannya masih ketat ya!
+Siap {name}, persaingannya masih ketat bro!
+Siap {name}, persaingannya masih ketat sekarang!
+Siap {name}, persaingannya masih ketat dulu!
+Siap {name}, persaingannya masih ketat wkwkwk!
+Siap {name}, persaingannya masih ketat anjay!
+Siap {name}, persaingannya masih ketat tetap pantau!
+Siap {name}, persaingannya masih ketat gas!
+Siap {name}, persaingannya masih ketat santai!
+Siap {name}, persaingannya masih ketat mantap!
+Siap {name}, jangan lepas mata dari lintasan ya!
+Siap {name}, jangan lepas mata dari lintasan bro!
+Siap {name}, jangan lepas mata dari lintasan sekarang!
+Siap {name}, jangan lepas mata dari lintasan dulu!
+Siap {name}, jangan lepas mata dari lintasan wkwkwk!
+Siap {name}, jangan lepas mata dari lintasan anjay!
+Siap {name}, jangan lepas mata dari lintasan tetap pantau!
+Siap {name}, jangan lepas mata dari lintasan gas!
+Siap {name}, jangan lepas mata dari lintasan santai!
+Siap {name}, jangan lepas mata dari lintasan mantap!
+Siap {name}, semuanya masih mungkin terjadi ya!
+Siap {name}, semuanya masih mungkin terjadi bro!
+Siap {name}, semuanya masih mungkin terjadi sekarang!
+Siap {name}, semuanya masih mungkin terjadi dulu!
+Siap {name}, semuanya masih mungkin terjadi wkwkwk!
+Siap {name}, semuanya masih mungkin terjadi anjay!
+Siap {name}, semuanya masih mungkin terjadi tetap pantau!
+Siap {name}, semuanya masih mungkin terjadi gas!
+Siap {name}, semuanya masih mungkin terjadi santai!
+Siap {name}, semuanya masih mungkin terjadi mantap!
+Siap {name}, kita lihat siapa yang finish duluan ya!
+Siap {name}, kita lihat siapa yang finish duluan bro!
+Siap {name}, kita lihat siapa yang finish duluan sekarang!
+Siap {name}, kita lihat siapa yang finish duluan dulu!
+Siap {name}, kita lihat siapa yang finish duluan wkwkwk!
+Siap {name}, kita lihat siapa yang finish duluan anjay!
+Siap {name}, kita lihat siapa yang finish duluan tetap pantau!
+Siap {name}, kita lihat siapa yang finish duluan gas!
+Siap {name}, kita lihat siapa yang finish duluan santai!
+Siap {name}, kita lihat siapa yang finish duluan mantap!

@@ -1,5 +1,100 @@
-Mantap {name}, dukung terus balapannya!
-Terima kasih {name}, tetap ramaikan live!
-Gas {name}, support kalian bikin semangat!
-Siap {name}, makasih sudah nonton!
-Mantap {name}, jangan pergi dulu!
+Mantap {name}, dukung terus balapannya bro!
+Mantap {name}, dukung terus balapannya ya!
+Mantap {name}, dukung terus balapannya wkwkwk!
+Mantap {name}, dukung terus balapannya anjay!
+Mantap {name}, dukung terus balapannya anjir!
+Mantap {name}, dukung terus balapannya mantap!
+Mantap {name}, dukung terus balapannya gas!
+Mantap {name}, dukung terus balapannya sampai finish!
+Mantap {name}, dukung terus balapannya jangan pergi!
+Mantap {name}, dukung terus balapannya ayo!
+Mantap {name}, support kalian bikin live makin rame bro!
+Mantap {name}, support kalian bikin live makin rame ya!
+Mantap {name}, support kalian bikin live makin rame wkwkwk!
+Mantap {name}, support kalian bikin live makin rame anjay!
+Mantap {name}, support kalian bikin live makin rame anjir!
+Mantap {name}, support kalian bikin live makin rame mantap!
+Mantap {name}, support kalian bikin live makin rame gas!
+Mantap {name}, support kalian bikin live makin rame sampai finish!
+Mantap {name}, support kalian bikin live makin rame jangan pergi!
+Mantap {name}, support kalian bikin live makin rame ayo!
+Mantap {name}, makasih sudah ikut meramaikan live bro!
+Mantap {name}, makasih sudah ikut meramaikan live ya!
+Mantap {name}, makasih sudah ikut meramaikan live wkwkwk!
+Mantap {name}, makasih sudah ikut meramaikan live anjay!
+Mantap {name}, makasih sudah ikut meramaikan live anjir!
+Mantap {name}, makasih sudah ikut meramaikan live mantap!
+Mantap {name}, makasih sudah ikut meramaikan live gas!
+Mantap {name}, makasih sudah ikut meramaikan live sampai finish!
+Mantap {name}, makasih sudah ikut meramaikan live jangan pergi!
+Mantap {name}, makasih sudah ikut meramaikan live ayo!
+Mantap {name}, tetap semangat sampai finish bro!
+Mantap {name}, tetap semangat sampai finish ya!
+Mantap {name}, tetap semangat sampai finish wkwkwk!
+Mantap {name}, tetap semangat sampai finish anjay!
+Mantap {name}, tetap semangat sampai finish anjir!
+Mantap {name}, tetap semangat sampai finish mantap!
+Mantap {name}, tetap semangat sampai finish gas!
+Mantap {name}, tetap semangat sampai finish sampai finish!
+Mantap {name}, tetap semangat sampai finish jangan pergi!
+Mantap {name}, tetap semangat sampai finish ayo!
+Mantap {name}, jangan pergi dulu dari lintasan bro!
+Mantap {name}, jangan pergi dulu dari lintasan ya!
+Mantap {name}, jangan pergi dulu dari lintasan wkwkwk!
+Mantap {name}, jangan pergi dulu dari lintasan anjay!
+Mantap {name}, jangan pergi dulu dari lintasan anjir!
+Mantap {name}, jangan pergi dulu dari lintasan mantap!
+Mantap {name}, jangan pergi dulu dari lintasan gas!
+Mantap {name}, jangan pergi dulu dari lintasan sampai finish!
+Mantap {name}, jangan pergi dulu dari lintasan jangan pergi!
+Mantap {name}, jangan pergi dulu dari lintasan ayo!
+Mantap {name}, terus ramaikan chat bro!
+Mantap {name}, terus ramaikan chat ya!
+Mantap {name}, terus ramaikan chat wkwkwk!
+Mantap {name}, terus ramaikan chat anjay!
+Mantap {name}, terus ramaikan chat anjir!
+Mantap {name}, terus ramaikan chat mantap!
+Mantap {name}, terus ramaikan chat gas!
+Mantap {name}, terus ramaikan chat sampai finish!
+Mantap {name}, terus ramaikan chat jangan pergi!
+Mantap {name}, terus ramaikan chat ayo!
+Mantap {name}, dukungan kalian luar biasa bro!
+Mantap {name}, dukungan kalian luar biasa ya!
+Mantap {name}, dukungan kalian luar biasa wkwkwk!
+Mantap {name}, dukungan kalian luar biasa anjay!
+Mantap {name}, dukungan kalian luar biasa anjir!
+Mantap {name}, dukungan kalian luar biasa mantap!
+Mantap {name}, dukungan kalian luar biasa gas!
+Mantap {name}, dukungan kalian luar biasa sampai finish!
+Mantap {name}, dukungan kalian luar biasa jangan pergi!
+Mantap {name}, dukungan kalian luar biasa ayo!
+Mantap {name}, semangat buat semua pembalap bro!
+Mantap {name}, semangat buat semua pembalap ya!
+Mantap {name}, semangat buat semua pembalap wkwkwk!
+Mantap {name}, semangat buat semua pembalap anjay!
+Mantap {name}, semangat buat semua pembalap anjir!
+Mantap {name}, semangat buat semua pembalap mantap!
+Mantap {name}, semangat buat semua pembalap gas!
+Mantap {name}, semangat buat semua pembalap sampai finish!
+Mantap {name}, semangat buat semua pembalap jangan pergi!
+Mantap {name}, semangat buat semua pembalap ayo!
+Mantap {name}, kita lanjut sampai race selesai bro!
+Mantap {name}, kita lanjut sampai race selesai ya!
+Mantap {name}, kita lanjut sampai race selesai wkwkwk!
+Mantap {name}, kita lanjut sampai race selesai anjay!
+Mantap {name}, kita lanjut sampai race selesai anjir!
+Mantap {name}, kita lanjut sampai race selesai mantap!
+Mantap {name}, kita lanjut sampai race selesai gas!
+Mantap {name}, kita lanjut sampai race selesai sampai finish!
+Mantap {name}, kita lanjut sampai race selesai jangan pergi!
+Mantap {name}, kita lanjut sampai race selesai ayo!
+Mantap {name}, tetap ikut pantau pertarungan bro!
+Mantap {name}, tetap ikut pantau pertarungan ya!
+Mantap {name}, tetap ikut pantau pertarungan wkwkwk!
+Mantap {name}, tetap ikut pantau pertarungan anjay!
+Mantap {name}, tetap ikut pantau pertarungan anjir!
+Mantap {name}, tetap ikut pantau pertarungan mantap!
+Mantap {name}, tetap ikut pantau pertarungan gas!
+Mantap {name}, tetap ikut pantau pertarungan sampai finish!
+Mantap {name}, tetap ikut pantau pertarungan jangan pergi!
+Mantap {name}, tetap ikut pantau pertarungan ayo!

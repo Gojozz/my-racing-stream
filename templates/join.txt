@@ -1,5 +1,100 @@
-Gas {name}, ketik join kalau mau ikut!
-Siap {name}, tinggal ketik join!
-Ayo {name}, masuk antrean dengan ketik join!
-Gaskeun {name}, lintasan masih terbuka!
-Woy {name}, berani balapan? Ketik join!
+Gas {name}, ketik join kalau mau ikut balapan sekarang!
+Gas {name}, ketik join kalau mau ikut balapan di chat!
+Gas {name}, ketik join kalau mau ikut balapan bro!
+Gas {name}, ketik join kalau mau ikut balapan gas!
+Gas {name}, ketik join kalau mau ikut balapan ayo!
+Gas {name}, ketik join kalau mau ikut balapan sebelum terlambat!
+Gas {name}, ketik join kalau mau ikut balapan langsung!
+Gas {name}, ketik join kalau mau ikut balapan wkwkwk!
+Gas {name}, ketik join kalau mau ikut balapan anjay!
+Gas {name}, ketik join kalau mau ikut balapan jangan ragu!
+Gas {name}, tinggal ketik join untuk masuk race sekarang!
+Gas {name}, tinggal ketik join untuk masuk race di chat!
+Gas {name}, tinggal ketik join untuk masuk race bro!
+Gas {name}, tinggal ketik join untuk masuk race gas!
+Gas {name}, tinggal ketik join untuk masuk race ayo!
+Gas {name}, tinggal ketik join untuk masuk race sebelum terlambat!
+Gas {name}, tinggal ketik join untuk masuk race langsung!
+Gas {name}, tinggal ketik join untuk masuk race wkwkwk!
+Gas {name}, tinggal ketik join untuk masuk race anjay!
+Gas {name}, tinggal ketik join untuk masuk race jangan ragu!
+Gas {name}, ketik join dan ambil posisi sekarang!
+Gas {name}, ketik join dan ambil posisi di chat!
+Gas {name}, ketik join dan ambil posisi bro!
+Gas {name}, ketik join dan ambil posisi gas!
+Gas {name}, ketik join dan ambil posisi ayo!
+Gas {name}, ketik join dan ambil posisi sebelum terlambat!
+Gas {name}, ketik join dan ambil posisi langsung!
+Gas {name}, ketik join dan ambil posisi wkwkwk!
+Gas {name}, ketik join dan ambil posisi anjay!
+Gas {name}, ketik join dan ambil posisi jangan ragu!
+Gas {name}, masuk antrean dengan ketik join sekarang!
+Gas {name}, masuk antrean dengan ketik join di chat!
+Gas {name}, masuk antrean dengan ketik join bro!
+Gas {name}, masuk antrean dengan ketik join gas!
+Gas {name}, masuk antrean dengan ketik join ayo!
+Gas {name}, masuk antrean dengan ketik join sebelum terlambat!
+Gas {name}, masuk antrean dengan ketik join langsung!
+Gas {name}, masuk antrean dengan ketik join wkwkwk!
+Gas {name}, masuk antrean dengan ketik join anjay!
+Gas {name}, masuk antrean dengan ketik join jangan ragu!
+Gas {name}, ketik join kalau berani turun ke lintasan sekarang!
+Gas {name}, ketik join kalau berani turun ke lintasan di chat!
+Gas {name}, ketik join kalau berani turun ke lintasan bro!
+Gas {name}, ketik join kalau berani turun ke lintasan gas!
+Gas {name}, ketik join kalau berani turun ke lintasan ayo!
+Gas {name}, ketik join kalau berani turun ke lintasan sebelum terlambat!
+Gas {name}, ketik join kalau berani turun ke lintasan langsung!
+Gas {name}, ketik join kalau berani turun ke lintasan wkwkwk!
+Gas {name}, ketik join kalau berani turun ke lintasan anjay!
+Gas {name}, ketik join kalau berani turun ke lintasan jangan ragu!
+Gas {name}, join sekarang sebelum race makin ramai sekarang!
+Gas {name}, join sekarang sebelum race makin ramai di chat!
+Gas {name}, join sekarang sebelum race makin ramai bro!
+Gas {name}, join sekarang sebelum race makin ramai gas!
+Gas {name}, join sekarang sebelum race makin ramai ayo!
+Gas {name}, join sekarang sebelum race makin ramai sebelum terlambat!
+Gas {name}, join sekarang sebelum race makin ramai langsung!
+Gas {name}, join sekarang sebelum race makin ramai wkwkwk!
+Gas {name}, join sekarang sebelum race makin ramai anjay!
+Gas {name}, join sekarang sebelum race makin ramai jangan ragu!
+Gas {name}, ketik join untuk mengontrol mobil sendiri sekarang!
+Gas {name}, ketik join untuk mengontrol mobil sendiri di chat!
+Gas {name}, ketik join untuk mengontrol mobil sendiri bro!
+Gas {name}, ketik join untuk mengontrol mobil sendiri gas!
+Gas {name}, ketik join untuk mengontrol mobil sendiri ayo!
+Gas {name}, ketik join untuk mengontrol mobil sendiri sebelum terlambat!
+Gas {name}, ketik join untuk mengontrol mobil sendiri langsung!
+Gas {name}, ketik join untuk mengontrol mobil sendiri wkwkwk!
+Gas {name}, ketik join untuk mengontrol mobil sendiri anjay!
+Gas {name}, ketik join untuk mengontrol mobil sendiri jangan ragu!
+Gas {name}, mau ikut? langsung ketik join sekarang!
+Gas {name}, mau ikut? langsung ketik join di chat!
+Gas {name}, mau ikut? langsung ketik join bro!
+Gas {name}, mau ikut? langsung ketik join gas!
+Gas {name}, mau ikut? langsung ketik join ayo!
+Gas {name}, mau ikut? langsung ketik join sebelum terlambat!
+Gas {name}, mau ikut? langsung ketik join langsung!
+Gas {name}, mau ikut? langsung ketik join wkwkwk!
+Gas {name}, mau ikut? langsung ketik join anjay!
+Gas {name}, mau ikut? langsung ketik join jangan ragu!
+Gas {name}, lintasan masih terbuka, ketik join sekarang!
+Gas {name}, lintasan masih terbuka, ketik join di chat!
+Gas {name}, lintasan masih terbuka, ketik join bro!
+Gas {name}, lintasan masih terbuka, ketik join gas!
+Gas {name}, lintasan masih terbuka, ketik join ayo!
+Gas {name}, lintasan masih terbuka, ketik join sebelum terlambat!
+Gas {name}, lintasan masih terbuka, ketik join langsung!
+Gas {name}, lintasan masih terbuka, ketik join wkwkwk!
+Gas {name}, lintasan masih terbuka, ketik join anjay!
+Gas {name}, lintasan masih terbuka, ketik join jangan ragu!
+Gas {name}, siap balapan? ketik join sekarang!
+Gas {name}, siap balapan? ketik join di chat!
+Gas {name}, siap balapan? ketik join bro!
+Gas {name}, siap balapan? ketik join gas!
+Gas {name}, siap balapan? ketik join ayo!
+Gas {name}, siap balapan? ketik join sebelum terlambat!
+Gas {name}, siap balapan? ketik join langsung!
+Gas {name}, siap balapan? ketik join wkwkwk!
+Gas {name}, siap balapan? ketik join anjay!
+Gas {name}, siap balapan? ketik join jangan ragu!

@@ -1,5 +1,100 @@
-Waduh {name}, itu tadi hampir bikin jantungan!
-Gila {name}, manuvernya brutal!
-Buset {name}, makin panas balapannya!
-Mantap {name}, ini baru namanya racing!
-Anjay {name}, aksinya gokil banget!
+Waduh {name}, itu tadi hampir bikin jantungan bro!
+Waduh {name}, itu tadi hampir bikin jantungan wkwkwk!
+Waduh {name}, itu tadi hampir bikin jantungan anjay!
+Waduh {name}, itu tadi hampir bikin jantungan anjir!
+Waduh {name}, itu tadi hampir bikin jantungan gila!
+Waduh {name}, itu tadi hampir bikin jantungan parah!
+Waduh {name}, itu tadi hampir bikin jantungan mantap!
+Waduh {name}, itu tadi hampir bikin jantungan nih!
+Waduh {name}, itu tadi hampir bikin jantungan sekarang!
+Waduh {name}, itu tadi hampir bikin jantungan banget!
+Waduh {name}, manuvernya brutal banget bro!
+Waduh {name}, manuvernya brutal banget wkwkwk!
+Waduh {name}, manuvernya brutal banget anjay!
+Waduh {name}, manuvernya brutal banget anjir!
+Waduh {name}, manuvernya brutal banget gila!
+Waduh {name}, manuvernya brutal banget parah!
+Waduh {name}, manuvernya brutal banget mantap!
+Waduh {name}, manuvernya brutal banget nih!
+Waduh {name}, manuvernya brutal banget sekarang!
+Waduh {name}, manuvernya brutal banget banget!
+Waduh {name}, balapannya makin panas bro!
+Waduh {name}, balapannya makin panas wkwkwk!
+Waduh {name}, balapannya makin panas anjay!
+Waduh {name}, balapannya makin panas anjir!
+Waduh {name}, balapannya makin panas gila!
+Waduh {name}, balapannya makin panas parah!
+Waduh {name}, balapannya makin panas mantap!
+Waduh {name}, balapannya makin panas nih!
+Waduh {name}, balapannya makin panas sekarang!
+Waduh {name}, balapannya makin panas banget!
+Waduh {name}, aksinya gokil banget bro!
+Waduh {name}, aksinya gokil banget wkwkwk!
+Waduh {name}, aksinya gokil banget anjay!
+Waduh {name}, aksinya gokil banget anjir!
+Waduh {name}, aksinya gokil banget gila!
+Waduh {name}, aksinya gokil banget parah!
+Waduh {name}, aksinya gokil banget mantap!
+Waduh {name}, aksinya gokil banget nih!
+Waduh {name}, aksinya gokil banget sekarang!
+Waduh {name}, aksinya gokil banget banget!
+Waduh {name}, duelnya makin dekat bro!
+Waduh {name}, duelnya makin dekat wkwkwk!
+Waduh {name}, duelnya makin dekat anjay!
+Waduh {name}, duelnya makin dekat anjir!
+Waduh {name}, duelnya makin dekat gila!
+Waduh {name}, duelnya makin dekat parah!
+Waduh {name}, duelnya makin dekat mantap!
+Waduh {name}, duelnya makin dekat nih!
+Waduh {name}, duelnya makin dekat sekarang!
+Waduh {name}, duelnya makin dekat banget!
+Waduh {name}, Nitro tadi pas banget bro!
+Waduh {name}, Nitro tadi pas banget wkwkwk!
+Waduh {name}, Nitro tadi pas banget anjay!
+Waduh {name}, Nitro tadi pas banget anjir!
+Waduh {name}, Nitro tadi pas banget gila!
+Waduh {name}, Nitro tadi pas banget parah!
+Waduh {name}, Nitro tadi pas banget mantap!
+Waduh {name}, Nitro tadi pas banget nih!
+Waduh {name}, Nitro tadi pas banget sekarang!
+Waduh {name}, Nitro tadi pas banget banget!
+Waduh {name}, posisinya berubah lagi bro!
+Waduh {name}, posisinya berubah lagi wkwkwk!
+Waduh {name}, posisinya berubah lagi anjay!
+Waduh {name}, posisinya berubah lagi anjir!
+Waduh {name}, posisinya berubah lagi gila!
+Waduh {name}, posisinya berubah lagi parah!
+Waduh {name}, posisinya berubah lagi mantap!
+Waduh {name}, posisinya berubah lagi nih!
+Waduh {name}, posisinya berubah lagi sekarang!
+Waduh {name}, posisinya berubah lagi banget!
+Waduh {name}, nyaris terjadi tabrakan bro!
+Waduh {name}, nyaris terjadi tabrakan wkwkwk!
+Waduh {name}, nyaris terjadi tabrakan anjay!
+Waduh {name}, nyaris terjadi tabrakan anjir!
+Waduh {name}, nyaris terjadi tabrakan gila!
+Waduh {name}, nyaris terjadi tabrakan parah!
+Waduh {name}, nyaris terjadi tabrakan mantap!
+Waduh {name}, nyaris terjadi tabrakan nih!
+Waduh {name}, nyaris terjadi tabrakan sekarang!
+Waduh {name}, nyaris terjadi tabrakan banget!
+Waduh {name}, pembalapnya mulai mengejar bro!
+Waduh {name}, pembalapnya mulai mengejar wkwkwk!
+Waduh {name}, pembalapnya mulai mengejar anjay!
+Waduh {name}, pembalapnya mulai mengejar anjir!
+Waduh {name}, pembalapnya mulai mengejar gila!
+Waduh {name}, pembalapnya mulai mengejar parah!
+Waduh {name}, pembalapnya mulai mengejar mantap!
+Waduh {name}, pembalapnya mulai mengejar nih!
+Waduh {name}, pembalapnya mulai mengejar sekarang!
+Waduh {name}, pembalapnya mulai mengejar banget!
+Waduh {name}, finish makin dekat bro!
+Waduh {name}, finish makin dekat wkwkwk!
+Waduh {name}, finish makin dekat anjay!
+Waduh {name}, finish makin dekat anjir!
+Waduh {name}, finish makin dekat gila!
+Waduh {name}, finish makin dekat parah!
+Waduh {name}, finish makin dekat mantap!
+Waduh {name}, finish makin dekat nih!
+Waduh {name}, finish makin dekat sekarang!
+Waduh {name}, finish makin dekat banget!

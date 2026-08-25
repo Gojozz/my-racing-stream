@@ -1,5 +1,100 @@
-Halo {name}, selamat datang di lintasan!
-Woy {name}, mantap sudah mampir!
-Halo {name}, gas nonton sampai finish!
-Welcome {name}, balapannya lagi panas!
-Hai {name}, siap lihat aksi gila?
+Halo {name}, selamat datang di lintasan ya!
+Halo {name}, selamat datang di lintasan bro!
+Halo {name}, selamat datang di lintasan hari ini!
+Halo {name}, selamat datang di lintasan langsung gas!
+Halo {name}, selamat datang di lintasan mantap!
+Halo {name}, selamat datang di lintasan jangan pergi!
+Halo {name}, selamat datang di lintasan ayo!
+Halo {name}, selamat datang di lintasan wkwkwk!
+Halo {name}, selamat datang di lintasan anjay!
+Halo {name}, selamat datang di lintasan santai!
+Halo {name}, akhirnya mampir juga ke live ya!
+Halo {name}, akhirnya mampir juga ke live bro!
+Halo {name}, akhirnya mampir juga ke live hari ini!
+Halo {name}, akhirnya mampir juga ke live langsung gas!
+Halo {name}, akhirnya mampir juga ke live mantap!
+Halo {name}, akhirnya mampir juga ke live jangan pergi!
+Halo {name}, akhirnya mampir juga ke live ayo!
+Halo {name}, akhirnya mampir juga ke live wkwkwk!
+Halo {name}, akhirnya mampir juga ke live anjay!
+Halo {name}, akhirnya mampir juga ke live santai!
+Halo {name}, siap lihat balapan panas ya!
+Halo {name}, siap lihat balapan panas bro!
+Halo {name}, siap lihat balapan panas hari ini!
+Halo {name}, siap lihat balapan panas langsung gas!
+Halo {name}, siap lihat balapan panas mantap!
+Halo {name}, siap lihat balapan panas jangan pergi!
+Halo {name}, siap lihat balapan panas ayo!
+Halo {name}, siap lihat balapan panas wkwkwk!
+Halo {name}, siap lihat balapan panas anjay!
+Halo {name}, siap lihat balapan panas santai!
+Halo {name}, gas nonton sampai finish ya!
+Halo {name}, gas nonton sampai finish bro!
+Halo {name}, gas nonton sampai finish hari ini!
+Halo {name}, gas nonton sampai finish langsung gas!
+Halo {name}, gas nonton sampai finish mantap!
+Halo {name}, gas nonton sampai finish jangan pergi!
+Halo {name}, gas nonton sampai finish ayo!
+Halo {name}, gas nonton sampai finish wkwkwk!
+Halo {name}, gas nonton sampai finish anjay!
+Halo {name}, gas nonton sampai finish santai!
+Halo {name}, balapannya baru mulai ya!
+Halo {name}, balapannya baru mulai bro!
+Halo {name}, balapannya baru mulai hari ini!
+Halo {name}, balapannya baru mulai langsung gas!
+Halo {name}, balapannya baru mulai mantap!
+Halo {name}, balapannya baru mulai jangan pergi!
+Halo {name}, balapannya baru mulai ayo!
+Halo {name}, balapannya baru mulai wkwkwk!
+Halo {name}, balapannya baru mulai anjay!
+Halo {name}, balapannya baru mulai santai!
+Halo {name}, siap lihat aksi para pembalap ya!
+Halo {name}, siap lihat aksi para pembalap bro!
+Halo {name}, siap lihat aksi para pembalap hari ini!
+Halo {name}, siap lihat aksi para pembalap langsung gas!
+Halo {name}, siap lihat aksi para pembalap mantap!
+Halo {name}, siap lihat aksi para pembalap jangan pergi!
+Halo {name}, siap lihat aksi para pembalap ayo!
+Halo {name}, siap lihat aksi para pembalap wkwkwk!
+Halo {name}, siap lihat aksi para pembalap anjay!
+Halo {name}, siap lihat aksi para pembalap santai!
+Halo {name}, jangan sampai kelewatan duel ya!
+Halo {name}, jangan sampai kelewatan duel bro!
+Halo {name}, jangan sampai kelewatan duel hari ini!
+Halo {name}, jangan sampai kelewatan duel langsung gas!
+Halo {name}, jangan sampai kelewatan duel mantap!
+Halo {name}, jangan sampai kelewatan duel jangan pergi!
+Halo {name}, jangan sampai kelewatan duel ayo!
+Halo {name}, jangan sampai kelewatan duel wkwkwk!
+Halo {name}, jangan sampai kelewatan duel anjay!
+Halo {name}, jangan sampai kelewatan duel santai!
+Halo {name}, lintasan siap bikin tegang ya!
+Halo {name}, lintasan siap bikin tegang bro!
+Halo {name}, lintasan siap bikin tegang hari ini!
+Halo {name}, lintasan siap bikin tegang langsung gas!
+Halo {name}, lintasan siap bikin tegang mantap!
+Halo {name}, lintasan siap bikin tegang jangan pergi!
+Halo {name}, lintasan siap bikin tegang ayo!
+Halo {name}, lintasan siap bikin tegang wkwkwk!
+Halo {name}, lintasan siap bikin tegang anjay!
+Halo {name}, lintasan siap bikin tegang santai!
+Halo {name}, suasana sudah mulai panas ya!
+Halo {name}, suasana sudah mulai panas bro!
+Halo {name}, suasana sudah mulai panas hari ini!
+Halo {name}, suasana sudah mulai panas langsung gas!
+Halo {name}, suasana sudah mulai panas mantap!
+Halo {name}, suasana sudah mulai panas jangan pergi!
+Halo {name}, suasana sudah mulai panas ayo!
+Halo {name}, suasana sudah mulai panas wkwkwk!
+Halo {name}, suasana sudah mulai panas anjay!
+Halo {name}, suasana sudah mulai panas santai!
+Halo {name}, siap jadi bagian dari balapan ya!
+Halo {name}, siap jadi bagian dari balapan bro!
+Halo {name}, siap jadi bagian dari balapan hari ini!
+Halo {name}, siap jadi bagian dari balapan langsung gas!
+Halo {name}, siap jadi bagian dari balapan mantap!
+Halo {name}, siap jadi bagian dari balapan jangan pergi!
+Halo {name}, siap jadi bagian dari balapan ayo!
+Halo {name}, siap jadi bagian dari balapan wkwkwk!
+Halo {name}, siap jadi bagian dari balapan anjay!
+Halo {name}, siap jadi bagian dari balapan santai!

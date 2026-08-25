@@ -1,5 +1,100 @@
-Gas {name}, jangan kedip, aksinya cepat!
-Mantap {name}, fokus ke lintasan!
-Woy {name}, duel depan makin panas!
-Gas terus {name}, kita lihat siapa finish duluan!
-Gila {name}, posisi masih bisa berubah!
+Gas {name}, duel depan makin panas nih!
+Gas {name}, duel depan makin panas bro!
+Gas {name}, duel depan makin panas sekarang!
+Gas {name}, duel depan makin panas wkwkwk!
+Gas {name}, duel depan makin panas anjay!
+Gas {name}, duel depan makin panas anjir!
+Gas {name}, duel depan makin panas gas terus!
+Gas {name}, duel depan makin panas jangan lengah!
+Gas {name}, duel depan makin panas mantap!
+Gas {name}, duel depan makin panas gila!
+Gas {name}, jangan kedip, aksinya cepat nih!
+Gas {name}, jangan kedip, aksinya cepat bro!
+Gas {name}, jangan kedip, aksinya cepat sekarang!
+Gas {name}, jangan kedip, aksinya cepat wkwkwk!
+Gas {name}, jangan kedip, aksinya cepat anjay!
+Gas {name}, jangan kedip, aksinya cepat anjir!
+Gas {name}, jangan kedip, aksinya cepat gas terus!
+Gas {name}, jangan kedip, aksinya cepat jangan lengah!
+Gas {name}, jangan kedip, aksinya cepat mantap!
+Gas {name}, jangan kedip, aksinya cepat gila!
+Gas {name}, posisi masih bisa berubah nih!
+Gas {name}, posisi masih bisa berubah bro!
+Gas {name}, posisi masih bisa berubah sekarang!
+Gas {name}, posisi masih bisa berubah wkwkwk!
+Gas {name}, posisi masih bisa berubah anjay!
+Gas {name}, posisi masih bisa berubah anjir!
+Gas {name}, posisi masih bisa berubah gas terus!
+Gas {name}, posisi masih bisa berubah jangan lengah!
+Gas {name}, posisi masih bisa berubah mantap!
+Gas {name}, posisi masih bisa berubah gila!
+Gas {name}, pembalap mulai saling kejar nih!
+Gas {name}, pembalap mulai saling kejar bro!
+Gas {name}, pembalap mulai saling kejar sekarang!
+Gas {name}, pembalap mulai saling kejar wkwkwk!
+Gas {name}, pembalap mulai saling kejar anjay!
+Gas {name}, pembalap mulai saling kejar anjir!
+Gas {name}, pembalap mulai saling kejar gas terus!
+Gas {name}, pembalap mulai saling kejar jangan lengah!
+Gas {name}, pembalap mulai saling kejar mantap!
+Gas {name}, pembalap mulai saling kejar gila!
+Gas {name}, tikungan ini bisa menentukan nih!
+Gas {name}, tikungan ini bisa menentukan bro!
+Gas {name}, tikungan ini bisa menentukan sekarang!
+Gas {name}, tikungan ini bisa menentukan wkwkwk!
+Gas {name}, tikungan ini bisa menentukan anjay!
+Gas {name}, tikungan ini bisa menentukan anjir!
+Gas {name}, tikungan ini bisa menentukan gas terus!
+Gas {name}, tikungan ini bisa menentukan jangan lengah!
+Gas {name}, tikungan ini bisa menentukan mantap!
+Gas {name}, tikungan ini bisa menentukan gila!
+Gas {name}, jaraknya makin dekat nih!
+Gas {name}, jaraknya makin dekat bro!
+Gas {name}, jaraknya makin dekat sekarang!
+Gas {name}, jaraknya makin dekat wkwkwk!
+Gas {name}, jaraknya makin dekat anjay!
+Gas {name}, jaraknya makin dekat anjir!
+Gas {name}, jaraknya makin dekat gas terus!
+Gas {name}, jaraknya makin dekat jangan lengah!
+Gas {name}, jaraknya makin dekat mantap!
+Gas {name}, jaraknya makin dekat gila!
+Gas {name}, mobil depan mulai tertekan nih!
+Gas {name}, mobil depan mulai tertekan bro!
+Gas {name}, mobil depan mulai tertekan sekarang!
+Gas {name}, mobil depan mulai tertekan wkwkwk!
+Gas {name}, mobil depan mulai tertekan anjay!
+Gas {name}, mobil depan mulai tertekan anjir!
+Gas {name}, mobil depan mulai tertekan gas terus!
+Gas {name}, mobil depan mulai tertekan jangan lengah!
+Gas {name}, mobil depan mulai tertekan mantap!
+Gas {name}, mobil depan mulai tertekan gila!
+Gas {name}, Nitro bisa jadi penentu nih!
+Gas {name}, Nitro bisa jadi penentu bro!
+Gas {name}, Nitro bisa jadi penentu sekarang!
+Gas {name}, Nitro bisa jadi penentu wkwkwk!
+Gas {name}, Nitro bisa jadi penentu anjay!
+Gas {name}, Nitro bisa jadi penentu anjir!
+Gas {name}, Nitro bisa jadi penentu gas terus!
+Gas {name}, Nitro bisa jadi penentu jangan lengah!
+Gas {name}, Nitro bisa jadi penentu mantap!
+Gas {name}, Nitro bisa jadi penentu gila!
+Gas {name}, pertempuran menuju finish makin seru nih!
+Gas {name}, pertempuran menuju finish makin seru bro!
+Gas {name}, pertempuran menuju finish makin seru sekarang!
+Gas {name}, pertempuran menuju finish makin seru wkwkwk!
+Gas {name}, pertempuran menuju finish makin seru anjay!
+Gas {name}, pertempuran menuju finish makin seru anjir!
+Gas {name}, pertempuran menuju finish makin seru gas terus!
+Gas {name}, pertempuran menuju finish makin seru jangan lengah!
+Gas {name}, pertempuran menuju finish makin seru mantap!
+Gas {name}, pertempuran menuju finish makin seru gila!
+Gas {name}, lintasan benar-benar panas nih!
+Gas {name}, lintasan benar-benar panas bro!
+Gas {name}, lintasan benar-benar panas sekarang!
+Gas {name}, lintasan benar-benar panas wkwkwk!
+Gas {name}, lintasan benar-benar panas anjay!
+Gas {name}, lintasan benar-benar panas anjir!
+Gas {name}, lintasan benar-benar panas gas terus!
+Gas {name}, lintasan benar-benar panas jangan lengah!
+Gas {name}, lintasan benar-benar panas mantap!
+Gas {name}, lintasan benar-benar panas gila!
