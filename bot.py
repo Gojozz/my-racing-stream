@@ -508,7 +508,10 @@ def find_live_video_id():
             developerKey=API_KEY
         )
 
-        request = youtube.search().list(
+        raise RuntimeError('Search API disabled (quota). Pakai YOUTUBE_LIVE_ID.')
+
+
+        request = youtube.search()  # DISABLED: use env/scrape only; was:.list(
 
             part="snippet",
 
@@ -1347,6 +1350,13 @@ def create_chat_with_retry(
 # =========================================================
 
 def start_bot():
+    # --- NON-API LIVE ID (hindari quota Search) ---
+    _eid = os.environ.get("YOUTUBE_LIVE_ID", "").strip()
+    if _eid:
+        global VIDEO_ID
+        VIDEO_ID = _eid
+        print(f"[AUTO] YOUTUBE_LIVE_ID dari env: {VIDEO_ID}")
+
 
     global VIDEO_ID
 
