@@ -77,9 +77,30 @@ jobs:
           pactl get-sink-volume stream_sink
           pactl get-sink-mute stream_sink
 
+      - name: Create YouTube Broadcast
+        env:
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+        run: |
+          echo "===== CREATE YOUTUBE BROADCAST ====="
+          python3 youtube_broadcast.py | tee youtube-broadcast.log
+
+          VIDEO_ID=$(grep '^VIDEO_ID=' youtube-broadcast.log | tail -1 | cut -d= -f2)
+
+          if [ -z "$VIDEO_ID" ]; then
+            echo "ERROR: VIDEO_ID tidak ditemukan."
+            exit 1
+          fi
+
+          echo "VIDEO_ID=$VIDEO_ID"
+          echo "YOUTUBE_LIVE_ID=$VIDEO_ID" >> "$GITHUB_ENV"
+
+          echo "===== YOUTUBE BROADCAST READY ====="
+          echo "YOUTUBE_LIVE_ID=$VIDEO_ID"
+
       - name: Start Chat Bot
         env:
-          YOUTUBE_LIVE_ID: ${{ secrets.YOUTUBE_LIVE_ID }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
           PIPER_BIN: piper

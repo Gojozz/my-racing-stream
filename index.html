@@ -1541,6 +1541,70 @@ function createCarMesh(template, conf) {
     return car;
 }
 
+
+function createNitroEffect(car) {
+    if (!car || !car.mesh || car.nitroFx) return;
+
+    const group = new THREE.Group();
+
+    const flame = new THREE.Mesh(
+        new THREE.ConeGeometry(0.18, 0.75, 10),
+        new THREE.MeshBasicMaterial({
+            color: 0xff8a00,
+            transparent: true,
+            opacity: 0.9
+        })
+    );
+
+    flame.rotation.x = Math.PI / 2;
+    flame.position.z = 0.55;
+
+    const glow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.24, 10, 10),
+        new THREE.MeshBasicMaterial({
+            color: 0xffcc44,
+            transparent: true,
+            opacity: 0.55
+        })
+    );
+
+    glow.position.z = 0.38;
+
+    group.add(flame);
+    group.add(glow);
+
+    car.mesh.add(group);
+
+    car.nitroFx = group;
+    car.nitroFlame = flame;
+}
+
+function updateNitroEffect(car, deltaSeconds) {
+    if (!car || !car.mesh) return;
+
+    if (car.nitroTimer > 0) {
+        createNitroEffect(car);
+
+        if (car.nitroFx) {
+            car.nitroFx.visible = true;
+
+            const pulse =
+                0.85 +
+                Math.sin(performance.now() * 0.025) * 0.2;
+
+            car.nitroFx.scale.setScalar(pulse);
+
+            if (car.nitroFlame) {
+                car.nitroFlame.scale.y =
+                    0.85 +
+                    Math.random() * 0.45;
+            }
+        }
+    } else if (car.nitroFx) {
+        car.nitroFx.visible = false;
+    }
+}
+
 function buildCars(templates) {
     cars.forEach(c => { if (c.mesh) scene.remove(c.mesh); });
     cars.length = 0;
@@ -2033,6 +2097,8 @@ function animate() {
                 0,
                 car.nitroTimer - deltaSeconds
             );
+
+            updateNitroEffect(car, deltaSeconds);
 
             let currentSpeed = car.aiSpeed;
 
