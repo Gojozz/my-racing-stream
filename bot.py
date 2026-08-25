@@ -490,80 +490,38 @@ threading.Thread(
 # =========================================================
 
 def find_live_video_id():
+    """Cari live TANPA Search API (hindari quota 429).
 
-    if not API_KEY or not CHANNEL_ID:
+    Urutan:
+    1. YOUTUBE_LIVE_ID dari env (GitHub Actions / broadcast)
+    2. Scrape channel /live (httpx)
+    """
+    print("[AUTO] Mencari live aktif (tanpa Search API)...")
 
-        print(
-            "[AUTO] YOUTUBE_API_KEY atau "
-            "YOUTUBE_CHANNEL_ID belum diisi."
-        )
-
-        return None
+    env_id = os.environ.get("YOUTUBE_LIVE_ID", "").strip()
+    if env_id:
+        print(f"[AUTO] Pakai YOUTUBE_LIVE_ID dari env: {env_id}")
+        return env_id
 
     try:
-
-        youtube = build(
-            "youtube",
-            "v3",
-            developerKey=API_KEY
-        )
-
-        raise RuntimeError('Search API disabled (quota). Pakai YOUTUBE_LIVE_ID.')
-
-
-        request = youtube.search()  # DISABLED: use env/scrape only; was:.list(
-
-            part="snippet",
-
-            channelId=CHANNEL_ID,
-
-            eventType="live",
-
-            type="video",
-
-            maxResults=1
-        )
-
-        response = request.execute()
-
-        items = response.get(
-            "items",
-            []
-        )
-
-        if not items:
-
-            print(
-                "[AUTO] Tidak ditemukan live stream aktif."
-            )
-
-            return None
-
-        video_id = (
-            items[0]["id"]["videoId"]
-        )
-
-        title = (
-            items[0]["snippet"]["title"]
-        )
-
-        print(
-            f"[AUTO] Ditemukan live: {title}"
-        )
-
-        print(
-            f"[AUTO] Video ID : {video_id}"
-        )
-
-        return video_id
-
+        vid = get_live_video_id(CHANNEL_ID or None)
+        if vid:
+            print(f"[AUTO] Live ID dari scrape: {vid}")
+            return vid
     except Exception as e:
+        print(f"[AUTO] get_live_video_id error: {e}")
 
-        print(
-            f"[AUTO ERROR] {e}"
-        )
+    try:
+        vid = fetch_live_id_via_https(CHANNEL_ID)
+        if vid:
+            print(f"[AUTO] Live ID dari fetch_live_id_via_https: {vid}")
+            return vid
+    except Exception as e:
+        print(f"[AUTO] fetch_live_id_via_https error: {e}")
 
-        return None
+    print("[AUTO] Tidak ditemukan live stream aktif (tanpa API).")
+    return None
+
 
 
 # =========================================================
@@ -1350,15 +1308,15 @@ def create_chat_with_retry(
 # =========================================================
 
 def start_bot():
-    # --- NON-API LIVE ID (hindari quota Search) ---
+    global VIDEO_ID
+
+    # NON-API: prioritaskan env dari GitHub Actions (broadcast)
     _eid = os.environ.get("YOUTUBE_LIVE_ID", "").strip()
     if _eid:
-        global VIDEO_ID
         VIDEO_ID = _eid
         print(f"[AUTO] YOUTUBE_LIVE_ID dari env: {VIDEO_ID}")
 
 
-    global VIDEO_ID
 
     print("====================================")
     print(
