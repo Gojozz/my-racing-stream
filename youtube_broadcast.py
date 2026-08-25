@@ -37,6 +37,13 @@ def create_broadcast():
         credentials=get_credentials(),
     )
 
+    configured_stream_key = os.environ.get("YOUTUBE_STREAM_KEY", "").strip()
+
+    if not configured_stream_key:
+        raise RuntimeError(
+            "YOUTUBE_STREAM_KEY belum tersedia."
+        )
+
     print("[YOUTUBE] Membuat broadcast baru...")
 
     broadcast = youtube.liveBroadcasts().insert(
@@ -137,29 +144,48 @@ Don't miss the next race and your chance to get on the track!
     for item in items:
         cdn = item.get("cdn", {})
         ingestion = cdn.get("ingestionInfo", {})
-
         stream_name = ingestion.get("streamName", "")
 
-        if stream_name:
+        if stream_name == configured_stream_key:
             stream = item
             break
 
     if stream is None:
         raise RuntimeError(
-            "Tidak ditemukan stream yang memiliki stream key."
+            "YOUTUBE_STREAM_KEY tidak cocok dengan stream YouTube mana pun."
         )
 
     stream_id = stream["id"]
+    stream_status = stream.get("status", {}).get(
+        "streamStatus", "unknown"
+    )
 
-    print(f"[YOUTUBE] Stream ID: {stream_id}")
+    print(f"[YOUTUBE] Stream ID yang cocok: {stream_id}")
+    print(f"[YOUTUBE] Stream status sebelum FFmpeg: {stream_status}")
 
-    print("[YOUTUBE] Menghubungkan broadcast ke stream...")
+    print("[YOUTUBE] Menghubungkan broadcast ke stream yang tepat...")
 
-    youtube.liveBroadcasts().bind(
-        part="id,contentDetails",
+    bound = youtube.liveBroadcasts().bind(
+        part="id,contentDetails,status",
         id=broadcast_id,
         streamId=stream_id,
     ).execute()
+
+    bound_stream_id = bound.get(
+        "contentDetails", {}
+    ).get("boundStreamId", "")
+
+    lifecycle = bound.get(
+        "status", {}
+    ).get("lifeCycleStatus", "unknown")
+
+    if bound_stream_id != stream_id:
+        raise RuntimeError(
+            f"Bind gagal: boundStreamId={bound_stream_id}, expected={stream_id}"
+        )
+
+    print(f"[YOUTUBE] Bound Stream ID: {bound_stream_id}")
+    print(f"[YOUTUBE] Lifecycle: {lifecycle}")
 
     print("========================================")
     print("YOUTUBE BROADCAST SIAP")
