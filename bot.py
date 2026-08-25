@@ -1303,6 +1303,40 @@ def create_chat_with_retry(
     return None
 
 
+
+# =========================================================
+# DUAL LIVE CHAT (landscape + vertical)
+# =========================================================
+chat_event_queue = queue.Queue(maxsize=500)
+
+
+def _chat_reader_loop(video_id, label):
+    if not video_id:
+        print(f"[CHAT:{label}] video_id kosong — skip")
+        return
+    print(f"[CHAT:{label}] start {video_id}")
+    while True:
+        try:
+            chat = create_chat_with_retry(video_id, max_retries=8, delay=5)
+            if chat is None:
+                print(f"[CHAT:{label}] gagal connect, sleep 15s")
+                time.sleep(15)
+                continue
+            print(f"[CHAT:{label}] connected")
+            while chat.is_alive():
+                for c in chat.get().sync_items():
+                    try:
+                        chat_event_queue.put_nowait((label, c))
+                    except queue.Full:
+                        pass
+                time.sleep(0.25)
+            print(f"[CHAT:{label}] disconnected")
+            time.sleep(3)
+        except Exception as e:
+            print(f"[CHAT:{label}] ERROR {e}")
+            time.sleep(5)
+
+
 # =========================================================
 # MAIN BOT
 # =========================================================
@@ -1392,35 +1426,26 @@ def start_bot():
 
     time.sleep(8)
 
-    chat = create_chat_with_retry(
-        VIDEO_ID,
-        max_retries=10,
-        delay=6
-    )
+    vertical_id = os.environ.get("YOUTUBE_VERTICAL_LIVE_ID", "").strip()
+    print(f"[BOT] Landscape Live ID: {VIDEO_ID}")
+    print(f"[BOT] Vertical Live ID : {vertical_id or '(tidak ada)'}")
 
-    if chat is None:
+    threading.Thread(
+        target=_chat_reader_loop,
+        args=(VIDEO_ID, "LAND"),
+        daemon=True,
+    ).start()
 
-        print(
-            "ERROR: Gagal konek ke live chat "
-            "setelah banyak percobaan."
-        )
+    if vertical_id and vertical_id != VIDEO_ID:
+        threading.Thread(
+            target=_chat_reader_loop,
+            args=(vertical_id, "VERT"),
+            daemon=True,
+        ).start()
+    else:
+        print("[BOT] Vertical chat tidak di-start.")
 
-        return
-
-    print(
-        f"Bot mendengarkan live chat: "
-        f"{VIDEO_ID}"
-    )
-
-    print(
-        "Siap menerima perintah: join"
-    )
-
-    print(
-        "LUNA siap membalas komentar."
-    )
-
-    speak("Luna siap. Ketik join untuk ikut balapan.")
+    speak("Luna siap di landscape dan vertical. Ketik join untuk ikut balapan.")
 
     print("====================================")
 
@@ -1428,209 +1453,162 @@ def start_bot():
 
         try:
 
-            if not chat.is_alive():
+            try:
+                label, c = chat_event_queue.get(timeout=1.0)
+            except queue.Empty:
+                continue
 
-                print(
-                    "[CHAT] Koneksi terputus. "
-                    "Reconnect..."
+            user = normalize_user(
+                c.author.name
+            )
+
+            raw_msg = str(
+                c.message
+            ).strip()
+
+            msg = raw_msg.lower()
+
+            print(f"[CHAT:{label}] {user}: {raw_msg}")
+
+            controls = {
+                "nitro": "nitro",
+                "n": "nitro",
+                "stop": "stop",
+                "s": "stop",
+                "gas": "gas",
+                "g": "gas",
+            }
+
+            control = controls.get(msg)
+
+            if control:
+                player = next(
+                    (
+                        p for p in state["active"]
+                        if str(p.get("user", "")).lower() == user.lower()
+                    ),
+                    None
                 )
 
-                time.sleep(5)
+                if player:
+                    player["control"] = control
+                    player["controlAt"] = time.time()
+                    player["controlId"] = int(time.time() * 1000)
 
-                chat = create_chat_with_retry(
-                    VIDEO_ID,
-                    max_retries=5,
-                    delay=5
-                )
-
-                if chat is None:
+                    save_state(state)
 
                     print(
-                        "[CHAT] Reconnect gagal. "
-                        "Bot berhenti."
+                        f"[GAME CONTROL] {user} -> {control}"
                     )
 
-                    break
+                    if control == "nitro":
+                        speak(f"Woy {user}, NITROOO! Gaspol!")
+                    elif control == "stop":
+                        speak(f"{user} ngerem! Mobil berhenti!")
+                    else:
+                        speak(f"{user} gas lagi! Cus!")
 
-                print(
-                    "[CHAT] Reconnect berhasil."
-                )
+                else:
+                    print(
+                        f"[CONTROL IGNORE] {user} belum jadi pembalap"
+                    )
 
                 continue
 
-            for c in chat.get().sync_items():
+            if (
+                msg == "join"
+                or
+                msg.startswith("join ")
+            ):
 
-                user = normalize_user(
-                    c.author.name
+                result = add_player(
+                    state,
+                    user
                 )
 
-                raw_msg = str(
-                    c.message
-                ).strip()
+                if result == "active":
 
-                msg = raw_msg.lower()
-
-                # =========================================
-                # GAME CONTROL — NITRO / STOP / GAS
-                # =========================================
-                controls = {
-                    "nitro": "nitro",
-                    "n": "nitro",
-                    "stop": "stop",
-                    "s": "stop",
-                    "gas": "gas",
-                    "g": "gas",
-                }
-
-                control = controls.get(msg)
-
-                if control:
-                    player = next(
-                        (
-                            p for p in state["active"]
-                            if str(p.get("user", "")).lower() == user.lower()
-                        ),
-                        None
+                    print(
+                        f"[JOIN] {user} -> "
+                        f"PEMBALAP AKTIF "
+                        f"({len(state['active'])}/"
+                        f"{MAX_PLAYERS})"
                     )
 
-                    if player:
-                        player["control"] = control
-                        player["controlAt"] = time.time()
-                        player["controlId"] = int(time.time() * 1000)
+                    save_state(state)
 
-                        save_state(state)
+                    print(
+                        f"[STATE] active: "
+                        f"{[p['user'] for p in state['active']]}"
+                    )
 
-                        print(
-                            f"[GAME CONTROL] {user} -> {control}"
-                        )
+                    speak(
+                        f"Woy {user} masuk lintasan, gas pol!"
+                    )
 
-                        if control == "nitro":
-                            speak(f"Woy {user}, NITROOO! Gaspol!")
-                        elif control == "stop":
-                            speak(f"{user} ngerem! Mobil berhenti!")
-                        else:
-                            speak(f"{user} gas lagi! Cus!")
+                elif result == "queue":
 
-                    else:
-                        print(
-                            f"[CONTROL IGNORE] {user} belum jadi pembalap"
-                        )
+                    position = len(
+                        state["queue"]
+                    )
 
-                    continue
+                    print(
+                        f"[QUEUE] {user} -> "
+                        f"ANTREAN #{position}"
+                    )
 
-                # =========================================
-                # JOIN — HARUS DIPROSES SEBELUM AI
-                # =========================================
+                    save_state(state)
+
+                    speak(
+                        f"{user} antri dulu ya, bentar lagi gas!"
+                    )
+
+                else:
+
+                    print(
+                        f"[IGNORE] {user} "
+                        f"sudah terdaftar"
+                    )
+
+                continue
+
+            if raw_msg:
+
+                now = time.time()
+
+                last_user_time = (
+                    last_chat_response
+                    .get(user.lower(), 0)
+                )
 
                 if (
-                    msg == "join"
-                    or
-                    msg.startswith("join ")
+                    now - last_user_time
+                    >= CHAT_COOLDOWN
                 ):
 
-                    result = add_player(
-                        state,
-                        user
-                    )
-
-                    if result == "active":
+                    if len(raw_msg) <= 180:
 
                         print(
-                            f"[JOIN] {user} -> "
-                            f"PEMBALAP AKTIF "
-                            f"({len(state['active'])}/"
-                            f"{MAX_PLAYERS})"
+                            f"[CHAT IN] {user}: {raw_msg}"
                         )
 
-                        save_state(state)
+                        category = template_category(raw_msg)
 
-                        print(
-                            f"[STATE] active: "
-                            f"{[p['user'] for p in state['active']]}"
-                        )
-
-                        speak(
-                            f"Woy {user} masuk lintasan, gas pol!"
-                        )
-
-                    elif result == "queue":
-
-                        position = len(
-                            state["queue"]
+                        reply = template_reply(
+                            user,
+                            raw_msg
                         )
 
                         print(
-                            f"[QUEUE] {user} -> "
-                            f"ANTREAN #{position}"
+                            f"[LUNA TEMPLATE] category={category} "
+                            f"{user}: {raw_msg} -> {reply}"
                         )
 
-                        save_state(state)
+                        speak(reply)
 
-                        speak(
-                            f"{user} antri dulu ya, bentar lagi gas!"
-                        )
-
-                    else:
-
-                        print(
-                            f"[IGNORE] {user} "
-                            f"sudah terdaftar"
-                        )
-
-                    # Jangan kirim JOIN ke LUNA.
-                    continue
-
-                # =========================================
-                # CHAT → LUNA
-                # =========================================
-
-                if raw_msg:
-
-                    now = time.time()
-
-                    last_user_time = (
-                        last_chat_response
-                        .get(user.lower(), 0)
-                    )
-
-                    if (
-                        now - last_user_time
-                        >= CHAT_COOLDOWN
-                    ):
-
-                        # Abaikan chat terlalu panjang
-                        if len(raw_msg) <= 180:
-
-                            print(
-                                f"[CHAT IN] {user}: {raw_msg}"
-                            )
-
-                            category = template_category(raw_msg)
-
-                            reply = template_reply(
-
-                                user,
-
-                                raw_msg
-
-                            )
-
-
-                            print(
-
-                                f"[LUNA TEMPLATE] category={category} "
-
-                                f"{user}: {raw_msg} -> {reply}"
-
-                            )
-
-                            print(f"[CHAT TEMPLATE] {user}: {raw_msg}")
-                            print(f"[TEMPLATE REPLY] {reply}")
-                            speak(reply)
-
-                            last_chat_response[
-                                user.lower()
-                            ] = now
+                        last_chat_response[
+                            user.lower()
+                        ] = now
 
         except Exception as e:
 
@@ -1640,7 +1618,6 @@ def start_bot():
 
             time.sleep(2)
 
-        time.sleep(0.25)
 
 
 if __name__ == "__main__":

@@ -94,6 +94,7 @@ jobs:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           YOUTUBE_CHANNEL_ID: ${{ secrets.YOUTUBE_CHANNEL_ID }}
           YOUTUBE_LIVE_ID: ${{ env.YOUTUBE_LIVE_ID }}
+          YOUTUBE_VERTICAL_LIVE_ID: ${{ env.YOUTUBE_VERTICAL_LIVE_ID }}
           PIPER_BIN: piper
           PIPER_MODEL: ${{ github.workspace }}/piper_models/id_ID-news_tts-medium.onnx
           PULSE_SINK: stream_sink
