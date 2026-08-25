@@ -211,17 +211,17 @@ jobs:
               "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_STREAM_KEY" \
               -map "[vout]" \
               -map 1:a \
-              -c:v:1 libx264 \
+              -c:v libx264 \
               -preset ultrafast \
               -tune zerolatency \
               -pix_fmt yuv420p \
               -r 25 \
-              -b:v:1 1500k \
-              -maxrate:v:1 1500k \
-              -bufsize:v:1 3000k \
+              -b:v 1500k \
+              -maxrate 1500k \
+              -bufsize 3000k \
               -g 50 \
-              -c:a:1 aac \
-              -b:a:1 128k \
+              -c:a aac \
+              -b:a 128k \
               -ar 44100 \
               -f flv \
               "rtmp://a.rtmp.youtube.com/live2/$YOUTUBE_VERTICAL_STREAM_KEY"
