@@ -178,7 +178,7 @@ jobs:
                 -thread_queue_size 1024 \
                 -f x11grab \
                 -video_size 1280x720 \
-                -framerate 25 \
+                -framerate 20 \
                 -i :99.0 \
                 -thread_queue_size 1024 \
                 -f pulse \
@@ -188,7 +188,7 @@ jobs:
                 -preset ultrafast \
                 -tune zerolatency \
                 -pix_fmt yuv420p \
-                -r 25 \
+                -r 20 \
                 -b:v 1600k \
                 -maxrate 1600k \
                 -bufsize 3200k \
@@ -205,7 +205,7 @@ jobs:
                 -thread_queue_size 1024 \
                 -f x11grab \
                 -video_size 1280x720 \
-                -framerate 25 \
+                -framerate 20 \
                 -i :99.0 \
                 -thread_queue_size 1024 \
                 -f pulse \
@@ -216,7 +216,7 @@ jobs:
                 -preset ultrafast \
                 -tune zerolatency \
                 -pix_fmt yuv420p \
-                -r 25 \
+                -r 20 \
                 -b:v 1600k \
                 -maxrate 1600k \
                 -bufsize 3200k \
@@ -231,7 +231,7 @@ jobs:
                 -preset ultrafast \
                 -tune zerolatency \
                 -pix_fmt yuv420p \
-                -r 25 \
+                -r 20 \
                 -b:v 1000k \
                 -maxrate 1000k \
                 -bufsize 2000k \
